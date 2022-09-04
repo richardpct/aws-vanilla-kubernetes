@@ -67,3 +67,8 @@ sudo mkdir /root/.kube
 sudo cp /etc/kubernetes/admin.conf /root/.kube/config
 
 sudo kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+sudo kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.3.0/deploy/static/provider/cloud/deploy.yaml
+
+curl -L https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml -o /tmp/components.yaml
+sed -i -e 's/\(--metric-resolution=15s\)/\1\n        - --kubelet-insecure-tls/' /tmp/components.yaml
+sudo kubectl apply -f /tmp/components.yaml
