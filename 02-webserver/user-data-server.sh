@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+set -e -x
 
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 sudo apt-get update -y
@@ -66,8 +66,15 @@ sudo kubeadm init --apiserver-advertise-address=$IPADDR --apiserver-cert-extra-s
 sudo mkdir /root/.kube
 sudo cp /etc/kubernetes/admin.conf /root/.kube/config
 
-sudo kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/tigera-operator.yaml
-sudo kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/custom-resources.yaml
+sudo curl -O https://get.helm.sh/helm-v3.12.3-linux-amd64.tar.gz
+sudo tar zxf helm-v3.12.3-linux-amd64.tar.gz
+sudo cp linux-amd64/helm /usr/local/bin/
+
+#sudo kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/tigera-operator.yaml
+#sudo kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/custom-resources.yaml
+sudo helm repo add projectcalico https://docs.tigera.io/calico/charts
+sudo kubectl create namespace tigera-operator
+sudo helm install calico projectcalico/tigera-operator --version v3.25.1 --namespace tigera-operator
 
 sudo kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.3.0/deploy/static/provider/cloud/deploy.yaml
 
@@ -76,3 +83,14 @@ sed -i -e 's/\(--metric-resolution=15s\)/\1\n        - --kubelet-insecure-tls/' 
 sudo kubectl apply -f /tmp/components.yaml
 
 sudo apt-get install -y nfs-common
+sudo apt-get install -y nfs-kernel-server
+
+sudo mkdir /nfs
+sudo echo '/nfs 10.0.0.0/24(rw,sync,no_root_squash,no_subtree_check)' >> /etc/exports
+sudo exportfs -a
+sudo helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+sudo helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
+  --set nfs.server=$IPADDR \
+  --set nfs.path=/nfs
+
+echo 'DONE'

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+set -e -x
 
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 sudo apt-get update -y
@@ -60,3 +60,5 @@ sudo apt-get install -y nfs-common
 
 rm /etc/containerd/config.toml
 systemctl restart containerd
+
+echo 'DONE'
