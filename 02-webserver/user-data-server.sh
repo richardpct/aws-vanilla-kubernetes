@@ -58,10 +58,11 @@ sudo apt-get install -y kubelet=1.27.3-00 kubeadm=1.27.3-00 kubectl=1.27.3-00
 rm /etc/containerd/config.toml
 systemctl restart containerd
 
+PUBLIC_IP=$(curl -s ifconfig.me)
 IPADDR=$(ip a s dev ens5 | awk '/inet /{print $2}' | awk -F / '{print $1}')
 NODENAME=$(hostname -s)
 
-sudo kubeadm init --apiserver-advertise-address=$IPADDR --apiserver-cert-extra-sans=$IPADDR --pod-network-cidr=192.168.0.0/16 --node-name $NODENAME --ignore-preflight-errors Swap
+sudo kubeadm init --apiserver-advertise-address=$IPADDR --apiserver-cert-extra-sans=${PUBLIC_IP},${IPADDR} --pod-network-cidr=192.168.0.0/16 --node-name $NODENAME --ignore-preflight-errors Swap
 
 sudo mkdir /root/.kube
 sudo cp /etc/kubernetes/admin.conf /root/.kube/config

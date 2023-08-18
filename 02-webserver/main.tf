@@ -39,6 +39,15 @@ resource "aws_security_group_rule" "server_inbound_http" {
   security_group_id = aws_security_group.kubernetes_server.id
 }
 
+resource "aws_security_group_rule" "server_inbound_api" {
+  type              = "ingress"
+  from_port         = 6443
+  to_port           = 6443
+  protocol          = "tcp"
+  cidr_blocks       = [var.my_ip_address]
+  security_group_id = aws_security_group.kubernetes_server.id
+}
+
 resource "aws_security_group_rule" "server_inbound_ssh" {
   type              = "ingress"
   from_port         = 22
