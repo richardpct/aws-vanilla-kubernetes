@@ -71,13 +71,11 @@ sudo curl -O https://get.helm.sh/helm-v3.12.3-linux-amd64.tar.gz
 sudo tar zxf helm-v3.12.3-linux-amd64.tar.gz
 sudo cp linux-amd64/helm /usr/local/bin/
 
-#sudo kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/tigera-operator.yaml
-#sudo kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/custom-resources.yaml
 sudo helm repo add projectcalico https://docs.tigera.io/calico/charts
 sudo kubectl create namespace tigera-operator
 sudo helm install calico projectcalico/tigera-operator --version v3.25.1 --namespace tigera-operator
 
-sudo kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.3.0/deploy/static/provider/cloud/deploy.yaml
+sudo kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/baremetal/deploy.yaml
 
 curl -L https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml -o /tmp/components.yaml
 sed -i -e 's/\(--metric-resolution=15s\)/\1\n        - --kubelet-insecure-tls/' /tmp/components.yaml
