@@ -75,7 +75,13 @@ sudo helm repo add projectcalico https://docs.tigera.io/calico/charts
 sudo kubectl create namespace tigera-operator
 sudo helm install calico projectcalico/tigera-operator --version v3.25.1 --namespace tigera-operator
 
-sudo kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/baremetal/deploy.yaml
+sudo helm repo add haproxytech https://haproxytech.github.io/helm-charts
+sudo helm install haproxy-kubernetes-ingress haproxytech/kubernetes-ingress \
+  --create-namespace \
+  --namespace haproxy-controller \
+  --set controller.service.nodePorts.http=30080 \
+  --set controller.service.nodePorts.https=30443 \
+  --set controller.service.nodePorts.stat=30002
 
 curl -L https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml -o /tmp/components.yaml
 sed -i -e 's/\(--metric-resolution=15s\)/\1\n        - --kubelet-insecure-tls/' /tmp/components.yaml
