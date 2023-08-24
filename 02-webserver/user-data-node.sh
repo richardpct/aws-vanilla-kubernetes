@@ -61,4 +61,15 @@ sudo apt-get install -y nfs-common
 rm /etc/containerd/config.toml
 systemctl restart containerd
 
+while ! nc -w1 ${kubernetes_server_ip} 2049; do
+  sleep 5
+done
+
+while ! sudo mount -t nfs ${kubernetes_server_ip}:/nfs /mnt; do
+  sleep 5
+done
+
+sudo /mnt/kubeadm.sh
+sudo umount /mnt
+
 echo 'DONE'

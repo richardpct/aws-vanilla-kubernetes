@@ -189,7 +189,7 @@ resource "aws_instance" "kubernetes_server" {
 
 resource "aws_instance" "kubernetes_node01" {
   ami                    = var.image_id
-  user_data              = "${file("user-data-node.sh")}"
+  user_data              = templatefile("user-data-node.sh", { kubernetes_server_ip = aws_instance.kubernetes_server.private_ip })
   instance_type          = var.instance_type
   key_name               = aws_key_pair.deployer.key_name
   subnet_id              = data.terraform_remote_state.network.outputs.subnet_public_id
@@ -202,7 +202,7 @@ resource "aws_instance" "kubernetes_node01" {
 
 resource "aws_instance" "kubernetes_node02" {
   ami                    = var.image_id
-  user_data              = "${file("user-data-node.sh")}"
+  user_data              = templatefile("user-data-node.sh", { kubernetes_server_ip = aws_instance.kubernetes_server.private_ip })
   instance_type          = var.instance_type
   key_name               = aws_key_pair.deployer.key_name
   subnet_id              = data.terraform_remote_state.network.outputs.subnet_public_id

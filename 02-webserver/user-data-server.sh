@@ -91,6 +91,11 @@ sudo apt-get install -y nfs-common
 sudo apt-get install -y nfs-kernel-server
 
 sudo mkdir /nfs
+set +x
+sudo grep 'kubeadm join' /var/log/user-data.log > /nfs/kubeadm.sh
+sudo grep -- '--discovery-token-ca-cert-hash' /var/log/user-data.log >> /nfs/kubeadm.sh
+set -x
+sudo chmod 755 /nfs/kubeadm.sh
 sudo echo '/nfs 10.0.0.0/24(rw,sync,no_root_squash,no_subtree_check)' >> /etc/exports
 sudo exportfs -a
 sudo helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
