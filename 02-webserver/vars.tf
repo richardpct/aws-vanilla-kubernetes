@@ -18,8 +18,8 @@ variable "image_id" {
   type        = string
   description = "image id"
 //  default     = "ami-0c6ebbd55ab05f070" // Ubuntu
-  default     = "ami-0a21d1c76ac56fee7" // Ubuntu
-//  default     = "ami-0f2c91ec8df4bde48" // Ubuntu
+//  default     = "ami-0a21d1c76ac56fee7" // Ubuntu
+  default     = "ami-0f2c91ec8df4bde48" // Ubuntu
 }
 
 variable "instance_type" {
