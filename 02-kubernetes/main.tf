@@ -3,23 +3,23 @@ resource "aws_key_pair" "deployer" {
   public_key = var.ssh_public_key
 }
 
-resource "aws_instance" "kubernetes_server" {
+resource "aws_instance" "kubernetes_master" {
   ami                    = var.image_id
-  user_data              = "${file("user-data-server.sh")}"
+  user_data              = "${file("user-data-master.sh")}"
   instance_type          = var.instance_type
   key_name               = aws_key_pair.deployer.key_name
   subnet_id              = data.terraform_remote_state.network.outputs.subnet_public_id
-  vpc_security_group_ids = [aws_security_group.kubernetes_server.id]
+  vpc_security_group_ids = [aws_security_group.kubernetes_master.id]
 
   tags = {
-    Name = "Kubernetes Server"
+    Name = "Kubernetes master"
   }
 }
 
 resource "aws_launch_configuration" "kubernetes_node" {
   name            = "Kubernetes node"
   image_id        = var.image_id
-  user_data       = templatefile("user-data-node.sh", { kubernetes_server_ip = aws_instance.kubernetes_server.private_ip })
+  user_data       = templatefile("user-data-node.sh", { kubernetes_master_ip = aws_instance.kubernetes_master.private_ip })
   instance_type   = var.instance_type
   key_name        = aws_key_pair.deployer.key_name
   security_groups = [aws_security_group.kubernetes_node.id]
@@ -43,7 +43,7 @@ resource "aws_autoscaling_group" "kubernetes_node" {
   }
 }
 
-resource "aws_eip" "kubernetes_server" {
-  instance = aws_instance.kubernetes_server.id
+resource "aws_eip" "kubernetes_master" {
+  instance = aws_instance.kubernetes_master.id
   vpc      = true
 }

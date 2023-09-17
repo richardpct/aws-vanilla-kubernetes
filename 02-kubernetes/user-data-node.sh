@@ -52,11 +52,11 @@ sudo apt-mark hold kubelet kubeadm kubectl
 
 sudo apt-get install -y nfs-common
 
-while ! nc -w1 ${kubernetes_server_ip} 2049; do
+while ! nc -w1 ${kubernetes_master_ip} 2049; do
   sleep 5
 done
 
-while ! sudo mount -t nfs ${kubernetes_server_ip}:/nfs /mnt; do
+while ! sudo mount -t nfs ${kubernetes_master_ip}:/nfs /mnt; do
   sleep 5
 done
 
