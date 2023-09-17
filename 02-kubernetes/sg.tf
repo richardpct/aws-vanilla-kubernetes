@@ -7,21 +7,12 @@ resource "aws_security_group" "kubernetes_server" {
   }
 }
 
-resource "aws_security_group" "kubernetes_node01" {
-  name   = "sg_k8s_node01"
+resource "aws_security_group" "kubernetes_node" {
+  name   = "sg_kubernetes_node"
   vpc_id = data.terraform_remote_state.network.outputs.vpc_id
 
   tags = {
-    Name = "Kubernetes node 01 SG"
-  }
-}
-
-resource "aws_security_group" "kubernetes_node02" {
-  name   = "sg_k8s_node02"
-  vpc_id = data.terraform_remote_state.network.outputs.vpc_id
-
-  tags = {
-    Name = "Kubernetes node 02 SG"
+    Name = "Kubernetes node SG"
   }
 }
 
@@ -61,74 +52,38 @@ resource "aws_security_group_rule" "server_outbound_all" {
   security_group_id = aws_security_group.kubernetes_server.id
 }
 
-resource "aws_security_group_rule" "node01_outbound_all" {
+resource "aws_security_group_rule" "node_outbound_all" {
   type              = "egress"
   from_port         = 0
   to_port           = 0
   protocol          = "-1"
   cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.kubernetes_node01.id
+  security_group_id = aws_security_group.kubernetes_node.id
 }
 
-resource "aws_security_group_rule" "node02_outbound_all" {
-  type              = "egress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.kubernetes_node02.id
-}
-
-resource "aws_security_group_rule" "server_to_node01" {
+resource "aws_security_group_rule" "server_to_node" {
   type                     = "ingress"
   from_port                = 0
   to_port                  = 0
   protocol                 = "-1"
   source_security_group_id = aws_security_group.kubernetes_server.id
-  security_group_id        = aws_security_group.kubernetes_node01.id
+  security_group_id        = aws_security_group.kubernetes_node.id
 }
 
-resource "aws_security_group_rule" "server_to_node02" {
+resource "aws_security_group_rule" "node_to_server" {
   type                     = "ingress"
   from_port                = 0
   to_port                  = 0
   protocol                 = "-1"
-  source_security_group_id = aws_security_group.kubernetes_server.id
-  security_group_id        = aws_security_group.kubernetes_node02.id
-}
-
-resource "aws_security_group_rule" "node01_to_server" {
-  type                     = "ingress"
-  from_port                = 0
-  to_port                  = 0
-  protocol                 = "-1"
-  source_security_group_id = aws_security_group.kubernetes_node01.id
+  source_security_group_id = aws_security_group.kubernetes_node.id
   security_group_id        = aws_security_group.kubernetes_server.id
 }
 
-resource "aws_security_group_rule" "node02_to_server" {
+resource "aws_security_group_rule" "node_to_node" {
   type                     = "ingress"
   from_port                = 0
   to_port                  = 0
   protocol                 = "-1"
-  source_security_group_id = aws_security_group.kubernetes_node02.id
-  security_group_id        = aws_security_group.kubernetes_server.id
-}
-
-resource "aws_security_group_rule" "node01_to_node02" {
-  type                     = "ingress"
-  from_port                = 0
-  to_port                  = 0
-  protocol                 = "-1"
-  source_security_group_id = aws_security_group.kubernetes_node01.id
-  security_group_id        = aws_security_group.kubernetes_node02.id
-}
-
-resource "aws_security_group_rule" "node02_to_node01" {
-  type                     = "ingress"
-  from_port                = 0
-  to_port                  = 0
-  protocol                 = "-1"
-  source_security_group_id = aws_security_group.kubernetes_node02.id
-  security_group_id        = aws_security_group.kubernetes_node01.id
+  source_security_group_id = aws_security_group.kubernetes_node.id
+  security_group_id        = aws_security_group.kubernetes_node.id
 }

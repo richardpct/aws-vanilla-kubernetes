@@ -16,29 +16,30 @@ resource "aws_instance" "kubernetes_server" {
   }
 }
 
-resource "aws_instance" "kubernetes_node01" {
-  ami                    = var.image_id
-  user_data              = templatefile("user-data-node.sh", { kubernetes_server_ip = aws_instance.kubernetes_server.private_ip })
-  instance_type          = var.instance_type
-  key_name               = aws_key_pair.deployer.key_name
-  subnet_id              = data.terraform_remote_state.network.outputs.subnet_private_node_a
-  vpc_security_group_ids = [aws_security_group.kubernetes_node01.id]
+resource "aws_launch_configuration" "kubernetes_node" {
+  name            = "Kubernetes node"
+  image_id        = var.image_id
+  user_data       = templatefile("user-data-node.sh", { kubernetes_server_ip = aws_instance.kubernetes_server.private_ip })
+  instance_type   = var.instance_type
+  key_name        = aws_key_pair.deployer.key_name
+  security_groups = [aws_security_group.kubernetes_node.id]
 
-  tags = {
-    Name = "kubernetes node01"
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
-resource "aws_instance" "kubernetes_node02" {
-  ami                    = var.image_id
-  user_data              = templatefile("user-data-node.sh", { kubernetes_server_ip = aws_instance.kubernetes_server.private_ip })
-  instance_type          = var.instance_type
-  key_name               = aws_key_pair.deployer.key_name
-  subnet_id              = data.terraform_remote_state.network.outputs.subnet_private_node_b
-  vpc_security_group_ids = [aws_security_group.kubernetes_node02.id]
+resource "aws_autoscaling_group" "kubernetes_node" {
+  name                 = "Kubernetes node"
+  launch_configuration = aws_launch_configuration.kubernetes_node.name
+  vpc_zone_identifier  = [data.terraform_remote_state.network.outputs.subnet_private_node_a, data.terraform_remote_state.network.outputs.subnet_private_node_b]
+  min_size             = 2
+  max_size             = 2
 
-  tags = {
-    Name = "kubernetes node02"
+  tag {
+    key                 = "Name"
+    value               = "kubernetes node"
+    propagate_at_launch = true
   }
 }
 
