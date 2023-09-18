@@ -3,8 +3,24 @@ resource "aws_key_pair" "deployer" {
   public_key = var.ssh_public_key
 }
 
+data "aws_ami" "ubuntu" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  owners = ["099720109477"] # Canonical
+}
+
 resource "aws_instance" "kubernetes_master" {
-  ami                    = var.image_id
+  ami                    = data.aws_ami.ubuntu.id
   user_data              = "${file("user-data-master.sh")}"
   instance_type          = var.instance_type
   key_name               = aws_key_pair.deployer.key_name
@@ -18,7 +34,7 @@ resource "aws_instance" "kubernetes_master" {
 
 resource "aws_launch_configuration" "kubernetes_node" {
   name            = "Kubernetes node"
-  image_id        = var.image_id
+  image_id        = data.aws_ami.ubuntu.id
   user_data       = templatefile("user-data-node.sh", { kubernetes_master_ip = aws_instance.kubernetes_master.private_ip })
   instance_type   = var.instance_type
   key_name        = aws_key_pair.deployer.key_name

@@ -14,12 +14,6 @@ variable "key_network" {
   description = "Network key"
 }
 
-variable "image_id" {
-  type        = string
-  description = "image id"
-  default     = "ami-0f2c91ec8df4bde48" // Ubuntu
-}
-
 variable "instance_type" {
   type        = string
   description = "instance type"
