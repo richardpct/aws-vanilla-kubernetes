@@ -17,3 +17,13 @@ output "subnet_private_node_b" {
   value       = aws_subnet.private_node_b.id
   description = "Subnet private node b"
 }
+
+output "subnet_public_lb_a" {
+  value       = aws_subnet.public_lb_a.id
+  description = "Subnet public lb a"
+}
+
+output "subnet_public_lb_b" {
+  value       = aws_subnet.public_lb_b.id
+  description = "Subnet public lb b"
+}

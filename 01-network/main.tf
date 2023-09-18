@@ -38,9 +38,24 @@ resource "aws_default_route_table" "route" {
   }
 }
 
-resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
-  route_table_id = aws_default_route_table.route.id
+resource "aws_subnet" "public_lb_a" {
+  vpc_id            = aws_vpc.my_vpc.id
+  cidr_block        = var.subnet_public_lb_a
+  availability_zone = data.aws_availability_zones.available.names[0]
+
+  tags = {
+    Name = "subnet_public_lb_a"
+  }
+}
+
+resource "aws_subnet" "public_lb_b" {
+  vpc_id            = aws_vpc.my_vpc.id
+  cidr_block        = var.subnet_public_lb_b
+  availability_zone = data.aws_availability_zones.available.names[1]
+
+  tags = {
+    Name = "subnet_public_lb_b"
+  }
 }
 
 resource "aws_subnet" "public_nat_a" {
@@ -154,6 +169,21 @@ resource "aws_route_table" "route_nat_b" {
   tags = {
     Name = "default_route_nat_b"
   }
+}
+
+resource "aws_route_table_association" "public" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_default_route_table.route.id
+}
+
+resource "aws_route_table_association" "public_lb_a" {
+  subnet_id      = aws_subnet.public_lb_a.id
+  route_table_id = aws_route_table.route.id
+}
+
+resource "aws_route_table_association" "public_lb_b" {
+  subnet_id      = aws_subnet.public_lb_b.id
+  route_table_id = aws_route_table.route.id
 }
 
 resource "aws_route_table_association" "public_nat_a" {
