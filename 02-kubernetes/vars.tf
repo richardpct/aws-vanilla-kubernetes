@@ -1,3 +1,14 @@
+locals {
+  ssh_port      = 22
+  http_port     = 80
+  https_port    = 443
+  kube_api_port = 6443
+  nodeport_http = 30080
+  anywhere      = ["0.0.0.0/0"]
+  node_min      = 2
+  node_max      = 2
+}
+
 variable "region" {
   type        = string
   description = "Region"

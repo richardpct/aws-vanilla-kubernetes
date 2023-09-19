@@ -57,24 +57,24 @@ PUBLIC_IP=$(curl -s ifconfig.me)
 IPADDR=$(ip a s dev ens5 | awk '/inet /{print $2}' | awk -F / '{print $1}')
 NODENAME=$(hostname -s)
 
-sudo kubeadm init --apiserver-advertise-address=$IPADDR --apiserver-cert-extra-sans=${PUBLIC_IP},${IPADDR} --pod-network-cidr=192.168.0.0/16 --node-name $NODENAME --ignore-preflight-errors Swap
+sudo kubeadm init --apiserver-advertise-address=$IPADDR --apiserver-cert-extra-sans=$PUBLIC_IP,$IPADDR --pod-network-cidr=192.168.0.0/16 --node-name $NODENAME --ignore-preflight-errors Swap
 
 sudo mkdir /root/.kube
 sudo cp /etc/kubernetes/admin.conf /root/.kube/config
 
-sudo curl -O https://get.helm.sh/helm-v${HELM_VERS}-linux-amd64.tar.gz
-sudo tar zxf helm-v${HELM_VERS}-linux-amd64.tar.gz
+sudo curl -O https://get.helm.sh/helm-v$HELM_VERS-linux-amd64.tar.gz
+sudo tar zxf helm-v$HELM_VERS-linux-amd64.tar.gz
 sudo cp linux-amd64/helm /usr/local/bin/
 
 sudo helm repo add projectcalico https://docs.tigera.io/calico/charts
 sudo kubectl create namespace tigera-operator
-sudo helm install calico projectcalico/tigera-operator --version v${CALICO_VERS} --namespace tigera-operator
+sudo helm install calico projectcalico/tigera-operator --version v$CALICO_VERS --namespace tigera-operator
 
 sudo helm repo add haproxytech https://haproxytech.github.io/helm-charts
 sudo helm install haproxy-kubernetes-ingress haproxytech/kubernetes-ingress \
   --create-namespace \
   --namespace haproxy-controller \
-  --set controller.service.nodePorts.http=30080 \
+  --set controller.service.nodePorts.http=${nodeport_http} \
   --set controller.service.nodePorts.https=30443 \
   --set controller.service.nodePorts.stat=30002
 
