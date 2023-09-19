@@ -2,9 +2,6 @@
 
 set -e -x
 
-HELM_VERS=3.12.3
-CALICO_VERS=3.26.1
-
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 sudo apt-get update -y
 sudo apt-get upgrade -y
@@ -46,8 +43,8 @@ sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/c
 sudo systemctl restart containerd
 sudo systemctl enable containerd
 
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v${kube_vers}/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${kube_vers}/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
 sudo apt-get update -y
 sudo apt-get install -y kubelet kubeadm kubectl
@@ -62,13 +59,13 @@ sudo kubeadm init --apiserver-advertise-address=$IPADDR --apiserver-cert-extra-s
 sudo mkdir /root/.kube
 sudo cp /etc/kubernetes/admin.conf /root/.kube/config
 
-sudo curl -O https://get.helm.sh/helm-v$HELM_VERS-linux-amd64.tar.gz
-sudo tar zxf helm-v$HELM_VERS-linux-amd64.tar.gz
+sudo curl -O https://get.helm.sh/helm-v${helm_vers}-linux-amd64.tar.gz
+sudo tar zxf helm-v${helm_vers}-linux-amd64.tar.gz
 sudo cp linux-amd64/helm /usr/local/bin/
 
 sudo helm repo add projectcalico https://docs.tigera.io/calico/charts
 sudo kubectl create namespace tigera-operator
-sudo helm install calico projectcalico/tigera-operator --version v$CALICO_VERS --namespace tigera-operator
+sudo helm install calico projectcalico/tigera-operator --version v${calico_vers} --namespace tigera-operator
 
 sudo helm repo add haproxytech https://haproxytech.github.io/helm-charts
 sudo helm install haproxy-kubernetes-ingress haproxytech/kubernetes-ingress \

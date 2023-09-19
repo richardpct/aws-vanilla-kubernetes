@@ -22,7 +22,10 @@ data "aws_ami" "ubuntu" {
 resource "aws_instance" "kubernetes_master" {
   ami                    = data.aws_ami.ubuntu.id
   user_data              = templatefile("user-data-master.sh",
-                                        { nodeport_http = local.nodeport_http })
+                                        { nodeport_http = local.nodeport_http,
+                                          kube_vers     = local.kube_vers,
+                                          calico_vers   = local.calico_vers,
+                                          helm_vers     = local.helm_vers })
   instance_type          = var.instance_type
   key_name               = aws_key_pair.deployer.key_name
   subnet_id              = data.terraform_remote_state.network.outputs.subnet_public_id
@@ -37,7 +40,8 @@ resource "aws_launch_configuration" "kubernetes_node" {
   name            = "Kubernetes node"
   image_id        = data.aws_ami.ubuntu.id
   user_data       = templatefile("user-data-node.sh",
-                                 { kubernetes_master_ip = aws_instance.kubernetes_master.private_ip })
+                                 { kubernetes_master_ip = aws_instance.kubernetes_master.private_ip,
+                                   kube_vers = local.kube_vers })
   instance_type   = var.instance_type
   key_name        = aws_key_pair.deployer.key_name
   security_groups = [aws_security_group.kubernetes_node.id]
