@@ -38,97 +38,55 @@ resource "aws_default_route_table" "route" {
   }
 }
 
-resource "aws_subnet" "public_lb_a" {
+resource "aws_subnet" "public_lb" {
+  count             = length(var.subnet_public_lb)
   vpc_id            = aws_vpc.my_vpc.id
-  cidr_block        = var.subnet_public_lb_a
-  availability_zone = data.aws_availability_zones.available.names[0]
+  cidr_block        = var.subnet_public_lb[count.index]
+  availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = {
-    Name = "subnet_public_lb_a"
+    Name = "subnet_public_lb_${count.index}"
   }
 }
 
-resource "aws_subnet" "public_lb_b" {
+resource "aws_subnet" "public_nat" {
+  count             = length(var.subnet_public_nat)
   vpc_id            = aws_vpc.my_vpc.id
-  cidr_block        = var.subnet_public_lb_b
-  availability_zone = data.aws_availability_zones.available.names[1]
+  cidr_block        = var.subnet_public_nat[count.index]
+  availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = {
-    Name = "subnet_public_lb_b"
+    Name = "subnet_public_nat_${count.index}"
   }
 }
 
-resource "aws_subnet" "public_nat_a" {
+resource "aws_subnet" "private_node" {
+  count             = length(var.subnet_private_node)
   vpc_id            = aws_vpc.my_vpc.id
-  cidr_block        = var.subnet_public_nat_a
-  availability_zone = data.aws_availability_zones.available.names[0]
+  cidr_block        = var.subnet_private_node[count.index]
+  availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = {
-    Name = "subnet_public_nat_a"
+    Name = "subnet_private_node_${count.index}"
   }
 }
 
-resource "aws_subnet" "public_nat_b" {
-  vpc_id            = aws_vpc.my_vpc.id
-  cidr_block        = var.subnet_public_nat_b
-  availability_zone = data.aws_availability_zones.available.names[1]
+resource "aws_eip" "nat" {
+  count = length(var.subnet_public_nat)
+  vpc   = true
 
   tags = {
-    Name = "subnet_public_nat_b"
+    Name = "eip_nat_$(count.index)"
   }
 }
 
-resource "aws_subnet" "private_node_a" {
-  vpc_id            = aws_vpc.my_vpc.id
-  cidr_block        = var.subnet_private_node_a
-  availability_zone = data.aws_availability_zones.available.names[0]
+resource "aws_nat_gateway" "nat_gw" {
+  count         = length(var.subnet_public_nat)
+  allocation_id = aws_eip.nat[count.index].id
+  subnet_id     = aws_subnet.public_nat[count.index].id
 
   tags = {
-    Name = "subnet_private_node_a"
-  }
-}
-
-resource "aws_subnet" "private_node_b" {
-  vpc_id            = aws_vpc.my_vpc.id
-  cidr_block        = var.subnet_private_node_b
-  availability_zone = data.aws_availability_zones.available.names[1]
-
-  tags = {
-    Name = "subnet_private_node_b"
-  }
-}
-
-resource "aws_eip" "nat_a" {
-  vpc = true
-
-  tags = {
-    Name = "eip_nat_a"
-  }
-}
-
-resource "aws_eip" "nat_b" {
-  vpc = true
-
-  tags = {
-    Name = "eip_nat_b"
-  }
-}
-
-resource "aws_nat_gateway" "nat_gw_a" {
-  allocation_id = aws_eip.nat_a.id
-  subnet_id     = aws_subnet.public_nat_a.id
-
-  tags = {
-    Name = "nat_gw_a"
-  }
-}
-
-resource "aws_nat_gateway" "nat_gw_b" {
-  allocation_id = aws_eip.nat_b.id
-  subnet_id     = aws_subnet.public_nat_b.id
-
-  tags = {
-    Name = "nat_gw_b"
+    Name = "nat_gw_$(count.index)"
   }
 }
 
@@ -145,29 +103,17 @@ resource "aws_route_table" "route" {
   }
 }
 
-resource "aws_route_table" "route_nat_a" {
+resource "aws_route_table" "route_nat" {
+  count  = length(var.subnet_public_nat)
   vpc_id = aws_vpc.my_vpc.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.nat_gw_a.id
+    gateway_id = aws_nat_gateway.nat_gw[count.index].id
   }
 
   tags = {
-    Name = "default_route_nat_a"
-  }
-}
-
-resource "aws_route_table" "route_nat_b" {
-  vpc_id = aws_vpc.my_vpc.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.nat_gw_b.id
-  }
-
-  tags = {
-    Name = "default_route_nat_b"
+    Name = "default_route_nat_${count.index}"
   }
 }
 
@@ -176,32 +122,20 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_default_route_table.route.id
 }
 
-resource "aws_route_table_association" "public_lb_a" {
-  subnet_id      = aws_subnet.public_lb_a.id
+resource "aws_route_table_association" "public_lb" {
+  count          = length(var.subnet_public_lb)
+  subnet_id      = aws_subnet.public_lb[count.index].id
   route_table_id = aws_route_table.route.id
 }
 
-resource "aws_route_table_association" "public_lb_b" {
-  subnet_id      = aws_subnet.public_lb_b.id
+resource "aws_route_table_association" "public_nat" {
+  count          = length(var.subnet_public_nat)
+  subnet_id      = aws_subnet.public_nat[count.index].id
   route_table_id = aws_route_table.route.id
 }
 
-resource "aws_route_table_association" "public_nat_a" {
-  subnet_id      = aws_subnet.public_nat_a.id
-  route_table_id = aws_route_table.route.id
-}
-
-resource "aws_route_table_association" "public_nat_b" {
-  subnet_id      = aws_subnet.public_nat_b.id
-  route_table_id = aws_route_table.route.id
-}
-
-resource "aws_route_table_association" "private_node_a" {
-  subnet_id      = aws_subnet.private_node_a.id
-  route_table_id = aws_route_table.route_nat_a.id
-}
-
-resource "aws_route_table_association" "private_node_b" {
-  subnet_id      = aws_subnet.private_node_b.id
-  route_table_id = aws_route_table.route_nat_b.id
+resource "aws_route_table_association" "private_node" {
+  count          = length(var.subnet_public_nat)
+  subnet_id      = aws_subnet.private_node[count.index].id
+  route_table_id = aws_route_table.route_nat[count.index].id
 }

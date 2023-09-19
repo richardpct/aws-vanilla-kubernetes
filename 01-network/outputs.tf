@@ -9,21 +9,21 @@ output "subnet_public_id" {
 }
 
 output "subnet_private_node_a" {
-  value       = aws_subnet.private_node_a.id
+  value       = aws_subnet.private_node[0].id
   description = "Subnet private node a"
 }
 
 output "subnet_private_node_b" {
-  value       = aws_subnet.private_node_b.id
+  value       = aws_subnet.private_node[1].id
   description = "Subnet private node b"
 }
 
 output "subnet_public_lb_a" {
-  value       = aws_subnet.public_lb_a.id
+  value       = aws_subnet.public_lb[0].id
   description = "Subnet public lb a"
 }
 
 output "subnet_public_lb_b" {
-  value       = aws_subnet.public_lb_b.id
+  value       = aws_subnet.public_lb[1].id
   description = "Subnet public lb b"
 }
