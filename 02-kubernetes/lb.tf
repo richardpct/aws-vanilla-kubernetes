@@ -3,8 +3,7 @@ resource "aws_lb" "web" {
   internal           = false
   load_balancer_type = "network"
   security_groups    = [aws_security_group.lb_web.id]
-  subnets            = [data.terraform_remote_state.network.outputs.subnet_public_lb_a,
-                        data.terraform_remote_state.network.outputs.subnet_public_lb_b]
+  subnets            = data.terraform_remote_state.network.outputs.subnet_public_lb[*]
 }
 
 resource "aws_lb_target_group" "web" {
