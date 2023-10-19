@@ -95,4 +95,4 @@ sudo helm install nfs-subdir-external-provisioner nfs-subdir-external-provisione
   --set nfs.server=$IPADDR \
   --set nfs.path=/nfs
 
-echo 'DONE'
+[ -f /var/run/reboot-required ] && shutdown -r now

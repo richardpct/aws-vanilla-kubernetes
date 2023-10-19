@@ -63,4 +63,4 @@ done
 sudo /mnt/kubeadm.sh
 sudo umount /mnt
 
-echo 'DONE'
+[ -f /var/run/reboot-required ] && shutdown -r now
