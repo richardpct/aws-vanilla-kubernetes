@@ -28,7 +28,13 @@ variable "key_network" {
   description = "Network key"
 }
 
-variable "instance_type" {
+variable "instance_type_master" {
+  type        = string
+  description = "instance type"
+  default     = "t3.medium"
+}
+
+variable "instance_type_node" {
   type        = string
   description = "instance type"
   default     = "t3.small"

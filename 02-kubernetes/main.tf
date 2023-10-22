@@ -26,7 +26,7 @@ resource "aws_instance" "kubernetes_master" {
                                           kube_vers     = local.kube_vers,
                                           calico_vers   = local.calico_vers,
                                           helm_vers     = local.helm_vers })
-  instance_type          = var.instance_type
+  instance_type          = var.instance_type_master
   key_name               = aws_key_pair.deployer.key_name
   subnet_id              = data.terraform_remote_state.network.outputs.subnet_public_id
   vpc_security_group_ids = [aws_security_group.kubernetes_master.id]
@@ -42,7 +42,7 @@ resource "aws_launch_configuration" "kubernetes_node" {
   user_data       = templatefile("user-data-node.sh",
                                  { kubernetes_master_ip = aws_instance.kubernetes_master.private_ip,
                                    kube_vers = local.kube_vers })
-  instance_type   = var.instance_type
+  instance_type   = var.instance_type_node
   key_name        = aws_key_pair.deployer.key_name
   security_groups = [aws_security_group.kubernetes_node.id]
 
