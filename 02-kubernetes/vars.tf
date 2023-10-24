@@ -40,6 +40,18 @@ variable "instance_type_node" {
   default     = "t3.small"
 }
 
+variable "root_size_master" {
+  type        = number
+  description = "instance master root size"
+  default     = 12
+}
+
+variable "root_size_node" {
+  type        = number
+  description = "instance node root size"
+  default     = 12
+}
+
 variable "ssh_public_key" {
   type        = string
   description = "ssh public key"

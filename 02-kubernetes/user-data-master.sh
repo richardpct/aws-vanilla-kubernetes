@@ -58,6 +58,9 @@ sudo kubeadm init --apiserver-advertise-address=$IPADDR --apiserver-cert-extra-s
 
 sudo mkdir /root/.kube
 sudo cp /etc/kubernetes/admin.conf /root/.kube/config
+mkdir /home/ubuntu/.kube
+sudo install -m 644 -o ubuntu -g ubuntu /etc/kubernetes/admin.conf /home/ubuntu/.kube/
+mv /home/ubuntu/.kube/admin.conf /home/ubuntu/.kube/config
 
 sudo curl -O https://get.helm.sh/helm-v${helm_vers}-linux-amd64.tar.gz
 sudo tar zxf helm-v${helm_vers}-linux-amd64.tar.gz

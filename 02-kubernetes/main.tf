@@ -31,9 +31,35 @@ resource "aws_instance" "kubernetes_master" {
   subnet_id              = data.terraform_remote_state.network.outputs.subnet_public_id
   vpc_security_group_ids = [aws_security_group.kubernetes_master.id]
 
+  root_block_device {
+    volume_size           = var.root_size_master
+    delete_on_termination = true
+  }
+
   tags = {
     Name = "Kubernetes master"
   }
+}
+
+data "aws_instance" "kubernetes_master" {
+  filter {
+    name   = "tag:Name"
+    values = ["Kubernetes master"]
+  }
+  filter {
+    name   = "instance-state-name"
+    values = ["running"]
+  }
+
+  depends_on = [aws_instance.kubernetes_master]
+}
+
+resource "null_resource" "get_kube_config" {
+  provisioner "local-exec" {
+    command = "aws ec2 wait instance-status-ok --instance-ids ${data.aws_instance.kubernetes_master.host_id} && ssh -o StrictHostKeyChecking=accept-new ubuntu@${aws_eip.kubernetes_master.public_ip} 'sed -e \"s;https://.*:6443;https://${aws_eip.kubernetes_master.public_ip}:6443;\" .kube/config' > ~/.kube/config-aws"
+  }
+
+  depends_on = [aws_instance.kubernetes_master]
 }
 
 resource "aws_launch_configuration" "kubernetes_node" {
@@ -45,6 +71,11 @@ resource "aws_launch_configuration" "kubernetes_node" {
   instance_type   = var.instance_type_node
   key_name        = aws_key_pair.deployer.key_name
   security_groups = [aws_security_group.kubernetes_node.id]
+
+  root_block_device {
+    volume_size           = var.root_size_node
+    delete_on_termination = true
+  }
 
   lifecycle {
     create_before_destroy = true
@@ -68,5 +99,5 @@ resource "aws_autoscaling_group" "kubernetes_node" {
 
 resource "aws_eip" "kubernetes_master" {
   instance = aws_instance.kubernetes_master.id
-  vpc      = true
+  domain   = "vpc"
 }
