@@ -66,22 +66,6 @@ sudo curl -O https://get.helm.sh/helm-v${helm_vers}-linux-amd64.tar.gz
 sudo tar zxf helm-v${helm_vers}-linux-amd64.tar.gz
 sudo cp linux-amd64/helm /usr/local/bin/
 
-sudo helm repo add projectcalico https://docs.tigera.io/calico/charts
-sudo kubectl create namespace tigera-operator
-sudo helm install calico projectcalico/tigera-operator --version v${calico_vers} --namespace tigera-operator
-
-sudo helm repo add haproxytech https://haproxytech.github.io/helm-charts
-sudo helm install haproxy-kubernetes-ingress haproxytech/kubernetes-ingress \
-  --create-namespace \
-  --namespace haproxy-controller \
-  --set controller.service.nodePorts.http=${nodeport_http} \
-  --set controller.service.nodePorts.https=30443 \
-  --set controller.service.nodePorts.stat=30002
-
-curl -L https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml -o /tmp/components.yaml
-sed -i -e 's/\(--metric-resolution=15s\)/\1\n        - --kubelet-insecure-tls/' /tmp/components.yaml
-sudo kubectl apply -f /tmp/components.yaml
-
 sudo apt-get install -y nfs-common
 sudo apt-get install -y nfs-kernel-server
 
@@ -93,9 +77,4 @@ set -x
 sudo chmod 755 /nfs/kubeadm.sh
 sudo echo '/nfs 10.0.0.0/16(rw,sync,no_root_squash,no_subtree_check)' >> /etc/exports
 sudo exportfs -a
-sudo helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
-sudo helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
-  --set nfs.server=$IPADDR \
-  --set nfs.path=/nfs
-
-[ -f /var/run/reboot-required ] && shutdown -r now
+#[ -f /var/run/reboot-required ] && shutdown -r now
