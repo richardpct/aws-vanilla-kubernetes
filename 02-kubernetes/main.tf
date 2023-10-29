@@ -24,7 +24,6 @@ resource "aws_instance" "kubernetes_master" {
   user_data              = templatefile("user-data-master.sh",
                                         { nodeport_http = local.nodeport_http,
                                           kube_vers     = local.kube_vers,
-                                          calico_vers   = local.calico_vers,
                                           helm_vers     = local.helm_vers })
   instance_type          = var.instance_type_master
   key_name               = aws_key_pair.deployer.key_name
@@ -60,6 +59,7 @@ resource "null_resource" "get_kube_config" {
 aws ec2 wait instance-status-ok --instance-ids ${data.aws_instance.kubernetes_master.host_id}
 ssh -o StrictHostKeyChecking=accept-new ubuntu@${aws_eip.kubernetes_master.public_ip} 'until [ -f .kube/config ]; do sleep 1; done'
 ssh ubuntu@${aws_eip.kubernetes_master.public_ip} 'sed -e "s;https://.*:6443;https://${aws_eip.kubernetes_master.public_ip}:6443;" .kube/config' > ~/.kube/config-aws
+chmod 600 ~/.kube/config-aws
     EOF
   }
 

@@ -92,7 +92,7 @@ resource "helm_release" "grafana" {
 
   set {
     name  = "grafana.config.security.admin_password"
-    value = "xxxxx"
+    value = var.grafana_pass
   }
 
   set {

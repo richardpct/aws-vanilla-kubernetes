@@ -1,6 +1,5 @@
 locals {
   kube_vers     = "1.28"
-  calico_vers   = "3.25.2"
   helm_vers     = "3.12.3"
   ssh_port      = 22
   http_port     = 80
@@ -55,6 +54,11 @@ variable "root_size_node" {
 variable "ssh_public_key" {
   type        = string
   description = "ssh public key"
+}
+
+variable "grafana_pass" {
+  type        = string
+  description = "grafana password"
 }
 
 variable "my_ip_address" {
