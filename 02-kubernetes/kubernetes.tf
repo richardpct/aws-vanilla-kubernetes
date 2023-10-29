@@ -94,4 +94,29 @@ resource "helm_release" "grafana" {
     name  = "grafana.config.security.admin_password"
     value = "xxxxx"
   }
+
+  set {
+    name  = "grafana.ingress.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "grafana.ingress.ingressClassName"
+    value = "haproxy"
+  }
+
+  set {
+    name  = "grafana.ingress.host"
+    value = "grafana.pidrou.com"
+  }
+
+  set {
+    name  = "grafana.ingress.path"
+    value = "/"
+  }
+
+  set {
+    name  = "grafana.ingress.pathType"
+    value = "Prefix"
+  }
 }

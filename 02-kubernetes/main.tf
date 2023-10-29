@@ -56,7 +56,11 @@ data "aws_instance" "kubernetes_master" {
 
 resource "null_resource" "get_kube_config" {
   provisioner "local-exec" {
-    command = "aws ec2 wait instance-status-ok --instance-ids ${data.aws_instance.kubernetes_master.host_id} && ssh -o StrictHostKeyChecking=accept-new ubuntu@${aws_eip.kubernetes_master.public_ip} 'until [ -f .kube/config ]; do sleep 1; done' && ssh -o StrictHostKeyChecking=accept-new ubuntu@${aws_eip.kubernetes_master.public_ip} 'sed -e \"s;https://.*:6443;https://${aws_eip.kubernetes_master.public_ip}:6443;\" .kube/config' > ~/.kube/config-aws"
+    command = <<EOF
+aws ec2 wait instance-status-ok --instance-ids ${data.aws_instance.kubernetes_master.host_id}
+ssh -o StrictHostKeyChecking=accept-new ubuntu@${aws_eip.kubernetes_master.public_ip} 'until [ -f .kube/config ]; do sleep 1; done'
+ssh ubuntu@${aws_eip.kubernetes_master.public_ip} 'sed -e "s;https://.*:6443;https://${aws_eip.kubernetes_master.public_ip}:6443;" .kube/config' > ~/.kube/config-aws
+    EOF
   }
 
   depends_on = [aws_instance.kubernetes_master]
