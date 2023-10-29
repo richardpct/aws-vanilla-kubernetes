@@ -77,4 +77,3 @@ set -x
 sudo chmod 755 /nfs/kubeadm.sh
 sudo echo '/nfs 10.0.0.0/16(rw,sync,no_root_squash,no_subtree_check)' >> /etc/exports
 sudo exportfs -a
-#[ -f /var/run/reboot-required ] && shutdown -r now
