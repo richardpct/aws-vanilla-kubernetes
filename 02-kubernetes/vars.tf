@@ -9,6 +9,7 @@ locals {
   anywhere      = ["0.0.0.0/0"]
   node_min      = 2
   node_max      = 2
+  record_dns    = toset(["www", "grafana"])
 }
 
 variable "region" {
