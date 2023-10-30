@@ -107,7 +107,7 @@ resource "helm_release" "grafana" {
 
   set {
     name  = "grafana.ingress.host"
-    value = "grafana.pidrou.com"
+    value = "grafana.${var.my_domain}"
   }
 
   set {

@@ -61,6 +61,11 @@ variable "grafana_pass" {
   description = "grafana password"
 }
 
+variable "my_domain" {
+  type        = string
+  description = "domain name"
+}
+
 variable "my_ip_address" {
   type        = string
   description = "My IP address"
