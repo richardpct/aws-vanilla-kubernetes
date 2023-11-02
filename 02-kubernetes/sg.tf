@@ -85,10 +85,10 @@ resource "aws_security_group" "lb_web" {
   vpc_id = data.terraform_remote_state.network.outputs.vpc_id
 
   ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = local.anywhere
+    from_port   = local.http_port
+    to_port     = local.http_port
+    protocol    = "tcp"
+    cidr_blocks = [var.my_ip_address]
   }
 
   egress {
