@@ -105,3 +105,13 @@ resource "aws_eip" "kubernetes_master" {
   instance = aws_instance.kubernetes_master.id
   domain   = "vpc"
 }
+
+resource "null_resource" "reboot_kube_master" {
+  provisioner "local-exec" {
+    command = <<EOF
+ssh ubuntu@${aws_eip.kubernetes_master.public_ip} 'if [ -f /var/run/reboot-required ]; then sudo shutdown -r now; fi'
+    EOF
+  }
+
+  depends_on = [null_resource.get_kube_config]
+}

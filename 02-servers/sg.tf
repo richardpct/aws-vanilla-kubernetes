@@ -73,8 +73,8 @@ resource "aws_security_group_rule" "node_to_node" {
 
 resource "aws_security_group_rule" "node_from_lb" {
   type                     = "ingress"
-  from_port                = local.nodeport_http
-  to_port                  = local.nodeport_http
+  from_port                = local.nodeport_https
+  to_port                  = local.nodeport_https
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.lb_web.id
   security_group_id        = aws_security_group.kubernetes_node.id
@@ -85,8 +85,8 @@ resource "aws_security_group" "lb_web" {
   vpc_id = data.terraform_remote_state.network.outputs.vpc_id
 
   ingress {
-    from_port   = local.http_port
-    to_port     = local.http_port
+    from_port   = local.https_port
+    to_port     = local.https_port
     protocol    = "tcp"
     cidr_blocks = [var.my_ip_address]
   }

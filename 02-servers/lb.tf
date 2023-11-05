@@ -7,14 +7,14 @@ resource "aws_lb" "web" {
 }
 
 resource "aws_lb_target_group" "web" {
-  port     = local.nodeport_http
+  port     = local.nodeport_https
   protocol = "TCP"
   vpc_id   = data.terraform_remote_state.network.outputs.vpc_id
 }
 
 resource "aws_lb_listener" "web" {
   load_balancer_arn = aws_lb.web.arn
-  port              = local.http_port
+  port              = local.https_port
   protocol          = "TCP"
 
   default_action {
