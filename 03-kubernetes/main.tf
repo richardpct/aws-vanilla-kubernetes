@@ -10,7 +10,7 @@ provider "helm" {
 
 resource "kubernetes_secret" "grafana_cert" {
   metadata {
-    name = "cert"
+    name = "grafana-cert"
   }
 
   type = "tls"
@@ -18,6 +18,19 @@ resource "kubernetes_secret" "grafana_cert" {
   data = {
     "tls.crt" = data.terraform_remote_state.certificate.outputs.grafana_certificate
     "tls.key" = data.terraform_remote_state.certificate.outputs.grafana_private_key
+  }
+}
+
+resource "kubernetes_secret" "www2_cert" {
+  metadata {
+    name = "www2-cert"
+  }
+
+  type = "tls"
+
+  data = {
+    "tls.crt" = data.terraform_remote_state.certificate.outputs.www2_certificate
+    "tls.key" = data.terraform_remote_state.certificate.outputs.www2_private_key
   }
 }
 
@@ -144,6 +157,6 @@ resource "helm_release" "grafana" {
 
   set {
     name  = "grafana.ingress.tlsSecret"
-    value = "cert"
+    value = "grafana-cert"
   }
 }
