@@ -113,12 +113,25 @@ resource "helm_release" "prometheus" {
   }
 }
 
+resource "helm_release" "grafana_loki" {
+  name       = "grafana-loki"
+  repository = "oci://registry-1.docker.io/bitnamicharts"
+  chart      = "grafana-loki"
+
+  depends_on = [helm_release.prometheus]
+
+  set {
+    name  = "global.storageClass"
+    value = "nfs-client"
+  }
+}
+
 resource "helm_release" "grafana" {
   name       = "grafana"
   repository = "oci://registry-1.docker.io/bitnamicharts"
   chart      = "grafana-operator"
 
-  depends_on = [helm_release.prometheus]
+  depends_on = [helm_release.grafana_loki]
 
   set {
     name  = "grafana.config.security.admin_password"
