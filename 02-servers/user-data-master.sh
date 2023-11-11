@@ -3,13 +3,14 @@
 set -e -x
 
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
 sudo apt-get update -y
 sudo apt-get upgrade -y
 sudo apt-get install -y \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    gnupg
+  apt-transport-https \
+  ca-certificates \
+  curl \
+  gnupg
 
 cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
 overlay
@@ -27,15 +28,20 @@ EOF
 
 sudo sysctl --system
 
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
 echo \
-  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
   "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 sudo apt-get update -y
-sudo apt-get install containerd.io -y
+sudo apt-get install -y \
+  docker-ce \
+  docker-ce-cli \
+  containerd.io \
+  docker-buildx-plugin \
+  docker-compose-plugin
 
 sudo containerd config default > /etc/containerd/config.toml
 sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
@@ -54,20 +60,24 @@ PUBLIC_IP=$(curl -s ifconfig.me)
 IPADDR=$(ip a s dev ens5 | awk '/inet /{print $2}' | awk -F / '{print $1}')
 NODENAME=$(hostname -s)
 
-sudo kubeadm init --apiserver-advertise-address=$IPADDR --apiserver-cert-extra-sans=$PUBLIC_IP,$IPADDR --pod-network-cidr=192.168.0.0/16 --node-name $NODENAME --ignore-preflight-errors Swap
+sudo kubeadm init \
+  --apiserver-advertise-address=$IPADDR \
+  --apiserver-cert-extra-sans=$PUBLIC_IP,$IPADDR \
+  --pod-network-cidr=192.168.0.0/16 \
+  --node-name $NODENAME \
+  --ignore-preflight-errors Swap
 
 sudo mkdir /root/.kube
 sudo cp /etc/kubernetes/admin.conf /root/.kube/config
-mkdir /home/ubuntu/.kube
-sudo install -m 644 -o ubuntu -g ubuntu /etc/kubernetes/admin.conf /home/ubuntu/.kube/
-mv /home/ubuntu/.kube/admin.conf /home/ubuntu/.kube/config
+mkdir /home/${linux_user}/.kube
+sudo install -m 644 -o ${linux_user} -g ${linux_user} /etc/kubernetes/admin.conf /home/${linux_user}/.kube/
+mv /home/${linux_user}/.kube/admin.conf /home/${linux_user}/.kube/config
 
 sudo curl -O https://get.helm.sh/helm-v${helm_vers}-linux-amd64.tar.gz
 sudo tar zxf helm-v${helm_vers}-linux-amd64.tar.gz
 sudo cp linux-amd64/helm /usr/local/bin/
 
-sudo apt-get install -y nfs-common
-sudo apt-get install -y nfs-kernel-server
+sudo apt-get install -y nfs-common nfs-kernel-server
 
 sudo mkdir /nfs
 set +x

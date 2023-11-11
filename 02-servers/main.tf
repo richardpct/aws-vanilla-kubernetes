@@ -3,12 +3,12 @@ resource "aws_key_pair" "deployer" {
   public_key = var.ssh_public_key
 }
 
-data "aws_ami" "ubuntu" {
+data "aws_ami" "debian" {
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+    values = ["debian-12-amd64-*"]
   }
 
   filter {
@@ -16,15 +16,15 @@ data "aws_ami" "ubuntu" {
     values = ["hvm"]
   }
 
-  owners = ["099720109477"] # Canonical
+  owners = ["136693071363"] # Debian
 }
 
 resource "aws_instance" "kubernetes_master" {
-  ami                    = data.aws_ami.ubuntu.id
+  ami                    = data.aws_ami.debian.id
   user_data              = templatefile("user-data-master.sh",
-                                        { nodeport_http = local.nodeport_http,
-                                          kube_vers     = local.kube_vers,
-                                          helm_vers     = local.helm_vers })
+                                        { linux_user = local.linux_user,
+                                          kube_vers  = local.kube_vers,
+                                          helm_vers  = local.helm_vers })
   instance_type          = var.instance_type_master
   key_name               = aws_key_pair.deployer.key_name
   subnet_id              = data.terraform_remote_state.network.outputs.subnet_public_id
@@ -57,8 +57,8 @@ resource "null_resource" "get_kube_config" {
   provisioner "local-exec" {
     command = <<EOF
 aws ec2 wait instance-status-ok --instance-ids ${data.aws_instance.kubernetes_master.host_id}
-ssh -o StrictHostKeyChecking=accept-new ubuntu@${aws_eip.kubernetes_master.public_ip} 'until [ -f .kube/config ]; do sleep 1; done'
-ssh ubuntu@${aws_eip.kubernetes_master.public_ip} 'sed -e "s;https://.*:6443;https://${aws_eip.kubernetes_master.public_ip}:6443;" .kube/config' > ~/.kube/config-aws
+ssh -o StrictHostKeyChecking=accept-new ${local.linux_user}@${aws_eip.kubernetes_master.public_ip} 'until [ -f .kube/config ]; do sleep 1; done'
+ssh ${local.linux_user}@${aws_eip.kubernetes_master.public_ip} 'sed -e "s;https://.*:6443;https://${aws_eip.kubernetes_master.public_ip}:6443;" .kube/config' > ~/.kube/config-aws
 chmod 600 ~/.kube/config-aws
     EOF
   }
@@ -68,7 +68,7 @@ chmod 600 ~/.kube/config-aws
 
 resource "aws_launch_configuration" "kubernetes_node" {
   name            = "Kubernetes node"
-  image_id        = data.aws_ami.ubuntu.id
+  image_id        = data.aws_ami.debian.id
   user_data       = templatefile("user-data-node.sh",
                                  { kubernetes_master_ip = aws_instance.kubernetes_master.private_ip,
                                    kube_vers = local.kube_vers })
@@ -109,7 +109,7 @@ resource "aws_eip" "kubernetes_master" {
 resource "null_resource" "reboot_kube_master" {
   provisioner "local-exec" {
     command = <<EOF
-ssh ubuntu@${aws_eip.kubernetes_master.public_ip} 'if [ -f /var/run/reboot-required ]; then sudo shutdown -r now; fi'
+ssh ${local.linux_user}@${aws_eip.kubernetes_master.public_ip} 'if [ -f /var/run/reboot-required ]; then sudo shutdown -r now; fi'
     EOF
   }
 

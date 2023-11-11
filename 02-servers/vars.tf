@@ -1,4 +1,5 @@
 locals {
+  linux_user     = "admin"
   kube_vers      = "1.28"
   helm_vers      = "3.12.3"
   ssh_port       = 22
