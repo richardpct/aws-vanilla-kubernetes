@@ -3,12 +3,12 @@ resource "aws_key_pair" "deployer" {
   public_key = var.ssh_public_key
 }
 
-data "aws_ami" "debian" {
+data "aws_ami" "linux" {
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["debian-12-amd64-*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
   }
 
   filter {
@@ -16,11 +16,11 @@ data "aws_ami" "debian" {
     values = ["hvm"]
   }
 
-  owners = ["136693071363"] # Debian
+  owners = ["099720109477"] # Canonical
 }
 
 resource "aws_instance" "kubernetes_master" {
-  ami                    = data.aws_ami.debian.id
+  ami                    = data.aws_ami.linux.id
   user_data              = templatefile("user-data-master.sh",
                                         { linux_user = local.linux_user,
                                           kube_vers  = local.kube_vers,
@@ -68,7 +68,7 @@ chmod 600 ~/.kube/config-aws
 
 resource "aws_launch_configuration" "kubernetes_node" {
   name            = "Kubernetes node"
-  image_id        = data.aws_ami.debian.id
+  image_id        = data.aws_ami.linux.id
   user_data       = templatefile("user-data-node.sh",
                                  { kubernetes_master_ip = aws_instance.kubernetes_master.private_ip,
                                    kube_vers = local.kube_vers })
