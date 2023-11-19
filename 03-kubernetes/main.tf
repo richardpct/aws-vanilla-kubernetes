@@ -40,6 +40,7 @@ resource "helm_release" "calico" {
   chart            = "tigera-operator"
   namespace        = "tigera-operator"
   create_namespace = true
+  force_update     = true
 
   depends_on = [kubernetes_secret.grafana_cert]
 }

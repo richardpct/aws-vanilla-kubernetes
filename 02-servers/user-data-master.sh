@@ -88,8 +88,7 @@ sudo kubeadm init \
   --apiserver-advertise-address=$IPADDR \
   --apiserver-cert-extra-sans=$PUBLIC_IP,$IPADDR \
   --pod-network-cidr=192.168.0.0/16 \
-  --node-name $NODENAME \
-  --ignore-preflight-errors Swap
+  --node-name $NODENAME
 
 sudo mkdir /root/.kube
 sudo cp /etc/kubernetes/admin.conf /root/.kube/config
