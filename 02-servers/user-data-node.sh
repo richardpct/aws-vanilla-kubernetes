@@ -28,8 +28,8 @@ EOF
 
 sudo sysctl --system
 
-curl -L -O https://github.com/containerd/containerd/releases/download/v1.7.8/containerd-1.7.8-linux-amd64.tar.gz
-sudo tar Cxzvf /usr/local containerd-1.7.8-linux-amd64.tar.gz
+curl -L -O https://github.com/containerd/containerd/releases/download/v${containerd_vers}/containerd-${containerd_vers}-linux-amd64.tar.gz
+sudo tar Cxzvf /usr/local containerd-${containerd_vers}-linux-amd64.tar.gz
 
 cat <<EOF | sudo tee /lib/systemd/system/containerd.service
 [Unit]
@@ -61,12 +61,12 @@ sudo mkdir /etc/containerd
 sudo containerd config default > /etc/containerd/config.toml
 sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
 
-curl -L -O https://github.com/opencontainers/runc/releases/download/v1.1.10/runc.amd64
+curl -L -O https://github.com/opencontainers/runc/releases/download/v${runc_vers}/runc.amd64
 sudo install -m 755 runc.amd64 /usr/local/sbin/runc
 
-curl -L -O https://github.com/containernetworking/plugins/releases/download/v1.3.0/cni-plugins-linux-amd64-v1.3.0.tgz
+curl -L -O https://github.com/containernetworking/plugins/releases/download/v${cni_plugins_vers}/cni-plugins-linux-amd64-v${cni_plugins_vers}.tgz
 sudo mkdir -p /opt/cni/bin
-sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.3.0.tgz
+sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v${cni_plugins_vers}.tgz
 
 sudo systemctl daemon-reload
 sudo systemctl start containerd
@@ -82,7 +82,7 @@ sudo apt-mark hold kubelet kubeadm kubectl
 
 sudo apt-get install -y nfs-common
 
-while ! nc -w1 ${kubernetes_master_ip} 2049; do
+while ! nc -w1 ${kubernetes_master_ip} ${nfs_port}; do
   sleep 5
 done
 

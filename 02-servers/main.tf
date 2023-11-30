@@ -22,9 +22,12 @@ data "aws_ami" "linux" {
 resource "aws_instance" "kubernetes_master" {
   ami                    = data.aws_ami.linux.id
   user_data              = templatefile("user-data-master.sh",
-                                        { linux_user = local.linux_user,
-                                          kube_vers  = local.kube_vers,
-                                          helm_vers  = local.helm_vers })
+                                        { linux_user       = local.linux_user,
+                                          kube_vers        = local.kube_vers,
+                                          helm_vers        = local.helm_vers,
+                                          containerd_vers  = local.containerd_vers,
+                                          runc_vers        = local.runc_vers,
+                                          cni_plugins_vers = local.cni_plugins_vers })
   instance_type          = var.instance_type_master
   key_name               = aws_key_pair.deployer.key_name
   subnet_id              = data.terraform_remote_state.network.outputs.subnet_public_id
@@ -66,12 +69,26 @@ chmod 600 ~/.kube/config-aws
   depends_on = [aws_instance.kubernetes_master]
 }
 
+resource "null_resource" "clean_ssh_know_hosts" {
+  provisioner "local-exec" {
+    command = <<EOF
+sed -i -e "/kube.${var.my_domain}/d" ~/.ssh/known_hosts
+    EOF
+  }
+  depends_on = [aws_instance.kubernetes_master]
+}
+
 resource "aws_launch_configuration" "kubernetes_node" {
   name            = "Kubernetes node"
   image_id        = data.aws_ami.linux.id
   user_data       = templatefile("user-data-node.sh",
                                  { kubernetes_master_ip = aws_instance.kubernetes_master.private_ip,
-                                   kube_vers = local.kube_vers })
+                                   kube_vers = local.kube_vers,
+                                   containerd_vers  = local.containerd_vers,
+                                   runc_vers        = local.runc_vers,
+                                   cni_plugins_vers = local.cni_plugins_vers,
+                                   nfs_port         = local.nfs_port })
+
   instance_type   = var.instance_type_node
   key_name        = aws_key_pair.deployer.key_name
   security_groups = [aws_security_group.kubernetes_node.id]

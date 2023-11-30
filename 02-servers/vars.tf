@@ -1,16 +1,20 @@
 locals {
-  linux_user     = "ubuntu"
-  kube_vers      = "1.28"
-  helm_vers      = "3.12.3"
-  ssh_port       = 22
-  https_port     = 443
-  kube_api_port  = 6443
-  nodeport_http  = 30080
-  nodeport_https = 30443
-  anywhere       = ["0.0.0.0/0"]
-  node_min       = 2
-  node_max       = 2
-  record_dns     = toset(["www2", "grafana"])
+  linux_user       = "ubuntu"
+  kube_vers        = "1.28"
+  helm_vers        = "3.12.3"
+  containerd_vers  = "1.7.8"
+  runc_vers        = "1.1.10"
+  cni_plugins_vers = "1.3.0"
+  ssh_port         = 22
+  https_port       = 443
+  nfs_port         = 2049
+  kube_api_port    = 6443
+  nodeport_http    = 30080
+  nodeport_https   = 30443
+  anywhere         = ["0.0.0.0/0"]
+  node_min         = 2
+  node_max         = 2
+  record_dns       = toset(["www2", "grafana"])
 }
 
 variable "region" {
