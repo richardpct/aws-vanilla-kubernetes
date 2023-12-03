@@ -65,7 +65,7 @@ resource "helm_release" "haproxy_ingress" {
   namespace        = "haproxy-controller"
   create_namespace = true
 
-  depends_on       = [helm_release.metrics_server]
+  depends_on       = [helm_release.calico]
 
   set {
     name  = "controller.service.nodePorts.http"
@@ -83,22 +83,14 @@ resource "helm_release" "haproxy_ingress" {
   }
 }
 
-resource "helm_release" "nfs_storage" {
-  name       = "nfs-subdir-external-provisioner"
-  repository = "https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner"
-  chart      = "nfs-subdir-external-provisioner"
+resource "helm_release" "longhorn" {
+  name             = "longhorn"
+  repository       = "https://charts.longhorn.io"
+  chart            = "longhorn"
+  namespace        = "longhorn-system"
+  create_namespace = true
 
-  depends_on = [helm_release.haproxy_ingress]
-
-  set {
-    name  = "nfs.server"
-    value = data.terraform_remote_state.servers.outputs.kubernetes_master_ip
-  }
-
-  set {
-    name  = "nfs.path"
-    value = "/nfs"
-  }
+  depends_on = [helm_release.calico]
 }
 
 resource "helm_release" "prometheus" {
@@ -106,7 +98,7 @@ resource "helm_release" "prometheus" {
   repository = "oci://registry-1.docker.io/bitnamicharts"
   chart      = "kube-prometheus"
 
-  depends_on = [helm_release.nfs_storage]
+  depends_on = [helm_release.calico]
 
   set {
     name  = "prometheus.service.port.http"
@@ -119,11 +111,26 @@ resource "helm_release" "grafana_loki" {
   repository = "oci://registry-1.docker.io/bitnamicharts"
   chart      = "grafana-loki"
 
-  depends_on = [helm_release.prometheus]
+  depends_on = [helm_release.calico]
 
   set {
     name  = "global.storageClass"
-    value = "nfs-client"
+    value = "longhorn"
+  }
+
+  set {
+    name  = "compactor.persistence.size"
+    value = "1Gi"
+  }
+
+  set {
+    name  = "ingester.persistence.size"
+    value = "1Gi"
+  }
+
+  set {
+    name  = "querier.persistence.size"
+    value = "1Gi"
   }
 }
 
@@ -132,7 +139,7 @@ resource "helm_release" "grafana" {
   repository = "oci://registry-1.docker.io/bitnamicharts"
   chart      = "grafana-operator"
 
-  depends_on = [helm_release.grafana_loki]
+  depends_on = [helm_release.calico]
 
   set {
     name  = "grafana.config.security.admin_password"

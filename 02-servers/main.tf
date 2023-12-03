@@ -93,6 +93,13 @@ resource "aws_launch_configuration" "kubernetes_node" {
   key_name        = aws_key_pair.deployer.key_name
   security_groups = [aws_security_group.kubernetes_node.id]
 
+  ebs_block_device {
+    device_name           = "/dev/sdb"
+    volume_size           = var.longhorn_size_node
+    volume_type           = "gp2"
+    delete_on_termination = true
+  }
+
   root_block_device {
     volume_size           = var.root_size_node
     delete_on_termination = true

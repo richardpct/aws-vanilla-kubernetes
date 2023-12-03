@@ -42,7 +42,7 @@ variable "instance_type_master" {
 variable "instance_type_node" {
   type        = string
   description = "instance type"
-  default     = "t3.small"
+  default     = "t3.medium"
 }
 
 variable "root_size_master" {
@@ -54,7 +54,13 @@ variable "root_size_master" {
 variable "root_size_node" {
   type        = number
   description = "instance node root size"
-  default     = 12
+  default     = 15
+}
+
+variable "longhorn_size_node" {
+  type        = number
+  description = "instance node longhorn size"
+  default     = 6
 }
 
 variable "ssh_public_key" {
