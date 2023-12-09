@@ -14,7 +14,7 @@ locals {
   anywhere         = ["0.0.0.0/0"]
   node_min         = 2
   node_max         = 2
-  record_dns       = toset(["www2", "grafana"])
+  record_dns       = toset(["grafana", "vault", "www2"])
 }
 
 variable "region" {
@@ -60,7 +60,7 @@ variable "root_size_node" {
 variable "longhorn_size_node" {
   type        = number
   description = "instance node longhorn size"
-  default     = 6
+  default     = 10
 }
 
 variable "ssh_public_key" {
