@@ -3,9 +3,9 @@
 set -e -x
 
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
-sudo apt update
-sudo apt upgrade -y
-sudo apt install -y \
+sudo apt-get update
+sudo apt-get upgrade -y
+sudo apt-get install -y \
   apt-transport-https \
   ca-certificates \
   curl \
@@ -77,8 +77,8 @@ sudo systemctl enable containerd
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v${kube_vers}/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${kube_vers}/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
-sudo apt update
-sudo apt install -y kubelet kubeadm kubectl
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 
 sudo mkdir /var/lib/longhorn
@@ -101,7 +101,7 @@ sudo tune2fs -L "longhorn" $longhorn_disk
 sudo echo 'LABEL=longhorn    /var/lib/longhorn    ext4    defaults    0 0' >> /etc/fstab
 sudo mount /var/lib/longhorn
 
-sudo apt install -y nfs-common
+sudo apt-get install -y nfs-common
 
 while ! nc -w1 ${kubernetes_master_ip} ${nfs_port}; do
   sleep 5
@@ -113,5 +113,3 @@ done
 
 sudo /mnt/kubeadm.sh
 sudo umount /mnt
-
-[ -f /var/run/reboot-required ] && shutdown -r now

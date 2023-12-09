@@ -80,6 +80,10 @@ sudo apt-get update -y
 sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 
+while ! curl -s ifconfig.me; do
+  sleep 2
+done
+
 PUBLIC_IP=$(curl -s ifconfig.me)
 IPADDR=$(ip a s dev ens5 | awk '/inet /{print $2}' | awk -F / '{print $1}')
 NODENAME=$(hostname -s)
