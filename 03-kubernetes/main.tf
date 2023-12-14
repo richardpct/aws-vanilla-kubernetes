@@ -106,133 +106,128 @@ resource "helm_release" "longhorn" {
   force_update     = true
 
   depends_on = [helm_release.calico]
+}
+
+resource "helm_release" "prometheus" {
+  name         = "prometheus"
+  repository   = "oci://registry-1.docker.io/bitnamicharts"
+  chart        = "kube-prometheus"
+  force_update = true
+
+  depends_on = [helm_release.calico]
 
   set {
-    name  = "deletingConfirmationFlag"
-    value = true
+    name  = "prometheus.service.port.http"
+    value = 80
   }
 }
 
-#resource "helm_release" "prometheus" {
-#  name         = "prometheus"
-#  repository   = "oci://registry-1.docker.io/bitnamicharts"
-#  chart        = "kube-prometheus"
-#  force_update = true
-#
-#  depends_on = [helm_release.calico]
-#
-#  set {
-#    name  = "prometheus.service.port.http"
-#    value = 80
-#  }
-#}
-#
-#resource "helm_release" "grafana_loki" {
-#  name         = "grafana-loki"
-#  repository   = "oci://registry-1.docker.io/bitnamicharts"
-#  chart        = "grafana-loki"
-#  force_update = true
-#
-#  depends_on = [helm_release.calico]
-#
-#  set {
-#    name  = "global.storageClass"
-#    value = "longhorn"
-#  }
-#  set {
-#    name  = "compactor.persistence.size"
-#    value = "1Gi"
-#  }
-#  set {
-#    name  = "ingester.persistence.size"
-#    value = "1Gi"
-#  }
-#  set {
-#    name  = "querier.persistence.size"
-#    value = "1Gi"
-#  }
-#}
-#
-#resource "helm_release" "grafana" {
-#  name         = "grafana"
-#  repository   = "oci://registry-1.docker.io/bitnamicharts"
-#  chart        = "grafana-operator"
-#  force_update = true
-#
-#  depends_on = [helm_release.calico]
-#
-#  set {
-#    name  = "grafana.config.security.admin_password"
-#    value = var.grafana_pass
-#  }
-#  set {
-#    name  = "grafana.ingress.enabled"
-#    value = "true"
-#  }
-#  set {
-#    name  = "grafana.ingress.ingressClassName"
-#    value = "haproxy"
-#  }
-#  set {
-#    name  = "grafana.ingress.host"
-#    value = "grafana.${var.my_domain}"
-#  }
-#  set {
-#    name  = "grafana.ingress.path"
-#    value = "/"
-#  }
-#  set {
-#    name  = "grafana.ingress.pathType"
-#    value = "Prefix"
-#  }
-#  set {
-#    name  = "grafana.ingress.tls"
-#    value = "true"
-#  }
-#  set {
-#    name  = "grafana.ingress.tlsSecret"
-#    value = "grafana-cert"
-#  }
-#}
+resource "helm_release" "grafana_loki" {
+  name         = "grafana-loki"
+  repository   = "oci://registry-1.docker.io/bitnamicharts"
+  chart        = "grafana-loki"
+  force_update = true
 
-#resource "helm_release" "vault" {
-#  name         = "vault"
-#  repository   = "https://helm.releases.hashicorp.com"
-#  chart        = "vault"
-#  force_update = true
-#
-#  depends_on = [helm_release.calico]
-#
-#  set {
-#    name  = "server.ingress.enabled"
-#    value = "true"
-#  }
-#  set {
-#    name  = "server.ingress.ingressClassName"
-#    value = "haproxy"
-#  }
-#  set {
-#    name  = "server.ingress.pathType"
-#    value = "Prefix"
-#  }
-#  set {
-#    name  = "server.ingress.hosts[0].host"
-#    value = "vault.${var.my_domain}"
-#  }
-#  set {
-#    name  = "server.ingress.hosts[0].paths[0]"
-#    value = "/"
-#  }
-#  set {
-#    name  = "server.ingress.tls[0].secretName"
-#    value = "vault-cert"
-#  }
-#  set {
-#    name  = "server.ingress.tls[0].hosts[0]"
-#    value = "vault.${var.my_domain}"
-#  }
-#  set {
-#    name  = "server.dataStorage.size"
-#    value = "1Gi"
-#  }
-#}
+  depends_on = [helm_release.calico]
+
+  set {
+    name  = "global.storageClass"
+    value = "longhorn"
+  }
+  set {
+    name  = "compactor.persistence.size"
+    value = "1Gi"
+  }
+  set {
+    name  = "ingester.persistence.size"
+    value = "1Gi"
+  }
+  set {
+    name  = "querier.persistence.size"
+    value = "1Gi"
+  }
+}
+
+resource "helm_release" "grafana" {
+  name         = "grafana"
+  repository   = "oci://registry-1.docker.io/bitnamicharts"
+  chart        = "grafana-operator"
+  force_update = true
+
+  depends_on = [helm_release.calico]
+
+  set {
+    name  = "grafana.config.security.admin_password"
+    value = var.grafana_pass
+  }
+  set {
+    name  = "grafana.ingress.enabled"
+    value = "true"
+  }
+  set {
+    name  = "grafana.ingress.ingressClassName"
+    value = "haproxy"
+  }
+  set {
+    name  = "grafana.ingress.host"
+    value = "grafana.${var.my_domain}"
+  }
+  set {
+    name  = "grafana.ingress.path"
+    value = "/"
+  }
+  set {
+    name  = "grafana.ingress.pathType"
+    value = "Prefix"
+  }
+  set {
+    name  = "grafana.ingress.tls"
+    value = "true"
+  }
+  set {
+    name  = "grafana.ingress.tlsSecret"
+    value = "grafana-cert"
+  }
+}
+
+resource "helm_release" "vault" {
+  name         = "vault"
+  repository   = "https://helm.releases.hashicorp.com"
+  chart        = "vault"
+  force_update = true
+
+  depends_on = [helm_release.calico]
+
+  set {
+    name  = "server.ingress.enabled"
+    value = "true"
+  }
+  set {
+    name  = "server.ingress.ingressClassName"
+    value = "haproxy"
+  }
+  set {
+    name  = "server.ingress.pathType"
+    value = "Prefix"
+  }
+  set {
+    name  = "server.ingress.hosts[0].host"
+    value = "vault.${var.my_domain}"
+  }
+  set {
+    name  = "server.ingress.hosts[0].paths[0]"
+    value = "/"
+  }
+  set {
+    name  = "server.ingress.tls[0].secretName"
+    value = "vault-cert"
+  }
+  set {
+    name  = "server.ingress.tls[0].hosts[0]"
+    value = "vault.${var.my_domain}"
+  }
+  set {
+    name  = "server.dataStorage.size"
+    value = "1Gi"
+  }
+}
