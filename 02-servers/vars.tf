@@ -1,10 +1,10 @@
 locals {
   linux_user       = "ubuntu"
-  kube_vers        = "1.28"
-  helm_vers        = "3.12.3"
-  containerd_vers  = "1.7.8"
+  kube_vers        = "1.29"
+  helm_vers        = "3.13.3"
+  containerd_vers  = "1.7.11"
   runc_vers        = "1.1.10"
-  cni_plugins_vers = "1.3.0"
+  cni_plugins_vers = "1.4.0"
   ssh_port         = 22
   http_port        = 80
   https_port       = 443
