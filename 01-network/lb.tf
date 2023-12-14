@@ -3,14 +3,14 @@ resource "aws_lb" "web" {
   internal           = false
   load_balancer_type = "network"
   security_groups    = [aws_security_group.lb_web.id]
-  subnets            = data.terraform_remote_state.network.outputs.subnet_public_lb[*]
+  subnets            = [for subnet in aws_subnet.public_lb : subnet.id]
 }
 
 resource "aws_lb_target_group" "http" {
   name     = "lb-target-group-http"
   port     = local.nodeport_http
   protocol = "TCP"
-  vpc_id   = data.terraform_remote_state.network.outputs.vpc_id
+  vpc_id   = aws_vpc.my_vpc.id
 }
 
 resource "aws_lb_listener" "http" {
@@ -28,7 +28,7 @@ resource "aws_lb_target_group" "https" {
   name     = "lb-target-group-https"
   port     = local.nodeport_https
   protocol = "TCP"
-  vpc_id   = data.terraform_remote_state.network.outputs.vpc_id
+  vpc_id   = aws_vpc.my_vpc.id
 }
 
 resource "aws_lb_listener" "https" {

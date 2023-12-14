@@ -6,8 +6,8 @@ locals {
   runc_vers        = "1.1.10"
   cni_plugins_vers = "1.3.0"
   ssh_port         = 22
-  http_port        = 80
-  https_port       = 443
+#  http_port        = 80
+#  https_port       = 443
   nfs_port         = 2049
   kube_api_port    = 6443
   nodeport_http    = 30080
@@ -15,7 +15,7 @@ locals {
   anywhere         = ["0.0.0.0/0"]
   node_min         = 2
   node_max         = 2
-  record_dns       = toset(["grafana", "vault", "www2"])
+#  record_dns       = toset(["grafana", "vault", "www2"])
 }
 
 variable "region" {

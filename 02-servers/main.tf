@@ -114,7 +114,8 @@ resource "aws_autoscaling_group" "kubernetes_node" {
   name                 = "Kubernetes node"
   launch_configuration = aws_launch_configuration.kubernetes_node.name
   vpc_zone_identifier  = data.terraform_remote_state.network.outputs.subnet_private_node[*]
-  target_group_arns    = [aws_lb_target_group.http.arn, aws_lb_target_group.https.arn]
+  target_group_arns    = [data.terraform_remote_state.network.outputs.lb_target_group_http_arn,
+                          data.terraform_remote_state.network.outputs.lb_target_group_https_arn]
   min_size             = local.node_min
   max_size             = local.node_max
 

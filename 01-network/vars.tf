@@ -1,3 +1,12 @@
+locals {
+  http_port      = 80
+  https_port     = 443
+  nodeport_http  = 30080
+  nodeport_https = 30443
+  anywhere       = ["0.0.0.0/0"]
+  record_dns     = toset(["grafana", "vault", "www2"])
+}
+
 variable "region" {
   type        = string
   description = "Region"
@@ -32,4 +41,14 @@ variable "subnet_private_node" {
   type        = list(string)
   description = "Subnet private node"
   default     = ["10.0.5.0/24", "10.0.6.0/24"]
+}
+
+variable "my_ip_address" {
+  type        = string
+  description = "My IP address"
+}
+
+variable "my_domain" {
+  type        = string
+  description = "domain name"
 }
