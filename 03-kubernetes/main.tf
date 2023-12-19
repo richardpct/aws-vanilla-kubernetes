@@ -108,56 +108,44 @@ resource "helm_release" "longhorn" {
   depends_on = [helm_release.calico]
 }
 
-resource "helm_release" "prometheus" {
-  name         = "prometheus"
-  repository   = "oci://registry-1.docker.io/bitnamicharts"
-  chart        = "kube-prometheus"
+resource "helm_release" "loki-stack" {
+  name         = "loki-stack"
+  repository   = "https://grafana.github.io/helm-charts"
+  chart        = "loki-stack"
   force_update = true
 
-  depends_on = [helm_release.calico]
+  depends_on = [helm_release.longhorn]
 
   set {
-    name  = "prometheus.service.port.http"
-    value = 80
-  }
-}
-
-resource "helm_release" "grafana_loki" {
-  name         = "grafana-loki"
-  repository   = "oci://registry-1.docker.io/bitnamicharts"
-  chart        = "grafana-loki"
-  force_update = true
-
-  depends_on = [helm_release.calico]
-
-  set {
-    name  = "global.storageClass"
-    value = "longhorn"
+    name  = "loki.auth_enabled"
+    value = "false"
   }
   set {
-    name  = "compactor.persistence.size"
+    name  = "prometheus.enabled"
+    value = "true"
+  }
+  set {
+    name  = "prometheus.server.persistentVolume.enabled"
+    value = "true"
+  }
+  set {
+    name  = "prometheus.server.persistentVolume.size"
     value = "1Gi"
   }
   set {
-    name  = "ingester.persistence.size"
+    name  = "grafana.enabled"
+    value = "true"
+  }
+  set {
+    name  = "loki.persistence.enabled"
+    value = "true"
+  }
+  set {
+    name  = "loki.persistence.size"
     value = "1Gi"
   }
   set {
-    name  = "querier.persistence.size"
-    value = "1Gi"
-  }
-}
-
-resource "helm_release" "grafana" {
-  name         = "grafana"
-  repository   = "oci://registry-1.docker.io/bitnamicharts"
-  chart        = "grafana-operator"
-  force_update = true
-
-  depends_on = [helm_release.calico]
-
-  set {
-    name  = "grafana.config.security.admin_password"
+    name  = "grafana.adminPassword"
     value = var.grafana_pass
   }
   set {
@@ -169,7 +157,7 @@ resource "helm_release" "grafana" {
     value = "haproxy"
   }
   set {
-    name  = "grafana.ingress.host"
+    name  = "grafana.ingress.hosts[0]"
     value = "grafana.${var.my_domain}"
   }
   set {
@@ -181,12 +169,20 @@ resource "helm_release" "grafana" {
     value = "Prefix"
   }
   set {
-    name  = "grafana.ingress.tls"
+    name  = "grafana.ingress.tls[0].secretName"
+    value = "grafana-cert"
+  }
+  set {
+    name  = "grafana.ingress.tls[0].hosts[0]"
+    value = "grafana.${var.my_domain}"
+  }
+  set {
+    name  = "grafana.persistence.enabled"
     value = "true"
   }
   set {
-    name  = "grafana.ingress.tlsSecret"
-    value = "grafana-cert"
+    name  = "grafana.persistence.size"
+    value = "1Gi"
   }
 }
 

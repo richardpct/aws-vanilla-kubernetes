@@ -61,7 +61,7 @@ variable "root_size_node" {
 variable "longhorn_size_node" {
   type        = number
   description = "instance node longhorn size"
-  default     = 10
+  default     = 15
 }
 
 variable "ssh_public_key" {
