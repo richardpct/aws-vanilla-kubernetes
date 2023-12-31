@@ -1,7 +1,3 @@
-locals {
-  nodeport_http = 30080
-}
-
 variable "region" {
   type        = string
   description = "Region"
@@ -16,6 +12,11 @@ variable "bucket" {
 variable "key_certificate" {
   type        = string
   description = "Certificate key"
+}
+
+variable "grafana_pass" {
+  type        = string
+  description = "grafana password"
 }
 
 variable "my_domain" {

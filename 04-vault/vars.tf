@@ -1,7 +1,3 @@
-locals {
-  nodeport_http = 30080
-}
-
 variable "region" {
   type        = string
   description = "Region"

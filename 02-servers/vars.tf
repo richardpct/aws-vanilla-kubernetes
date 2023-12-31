@@ -37,13 +37,13 @@ variable "key_network" {
 variable "instance_type_master" {
   type        = string
   description = "instance type"
-  default     = "t3.medium"
+  default     = "t3.small"
 }
 
 variable "instance_type_node" {
   type        = string
   description = "instance type"
-  default     = "t3.medium"
+  default     = "t3.small"
 }
 
 variable "root_size_master" {
