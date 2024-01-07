@@ -76,7 +76,7 @@ resource "aws_eip" "nat" {
   domain = "vpc"
 
   tags = {
-    Name = "eip_nat_$(count.index)"
+    Name = "eip_nat_${count.index}"
   }
 }
 
@@ -86,7 +86,7 @@ resource "aws_nat_gateway" "nat_gw" {
   subnet_id     = aws_subnet.public_nat[count.index].id
 
   tags = {
-    Name = "nat_gw_$(count.index)"
+    Name = "nat_gw_${count.index}"
   }
 }
 
