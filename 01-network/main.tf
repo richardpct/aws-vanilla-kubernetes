@@ -60,14 +60,14 @@ resource "aws_subnet" "public_nat" {
   }
 }
 
-resource "aws_subnet" "private_node" {
-  count             = length(var.subnet_private_node)
+resource "aws_subnet" "private_worker" {
+  count             = length(var.subnet_private_worker)
   vpc_id            = aws_vpc.my_vpc.id
-  cidr_block        = var.subnet_private_node[count.index]
+  cidr_block        = var.subnet_private_worker[count.index]
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = {
-    Name = "subnet_private_node_${count.index}"
+    Name = "subnet_private_worker_${count.index}"
   }
 }
 
@@ -134,8 +134,8 @@ resource "aws_route_table_association" "public_nat" {
   route_table_id = aws_route_table.route.id
 }
 
-resource "aws_route_table_association" "private_node" {
+resource "aws_route_table_association" "private_worker" {
   count          = length(var.subnet_public_nat)
-  subnet_id      = aws_subnet.private_node[count.index].id
+  subnet_id      = aws_subnet.private_worker[count.index].id
   route_table_id = aws_route_table.route_nat[count.index].id
 }

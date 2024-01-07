@@ -13,8 +13,8 @@ locals {
   nodeport_http    = 30080
   nodeport_https   = 30443
   anywhere         = ["0.0.0.0/0"]
-  node_min         = 2
-  node_max         = 2
+  worker_min         = 2
+  worker_max         = 2
   record_dns       = toset(["grafana", "vault", "www2"])
 }
 
@@ -40,7 +40,7 @@ variable "instance_type_master" {
   default     = "t3.small"
 }
 
-variable "instance_type_node" {
+variable "instance_type_worker" {
   type        = string
   description = "instance type"
   default     = "t3.small"
@@ -52,15 +52,15 @@ variable "root_size_master" {
   default     = 12
 }
 
-variable "root_size_node" {
+variable "root_size_worker" {
   type        = number
-  description = "instance node root size"
+  description = "instance worker root size"
   default     = 15
 }
 
-variable "longhorn_size_node" {
+variable "longhorn_size_worker" {
   type        = number
-  description = "instance node longhorn size"
+  description = "instance worker longhorn size"
   default     = 15
 }
 

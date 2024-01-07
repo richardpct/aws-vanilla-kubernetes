@@ -28,17 +28,17 @@ resource "aws_security_group" "kubernetes_master" {
   }
 }
 
-resource "aws_security_group_rule" "master_ingress_node" {
+resource "aws_security_group_rule" "master_ingress_worker" {
   type                     = "ingress"
   from_port                = 0
   to_port                  = 0
   protocol                 = "-1"
-  source_security_group_id = aws_security_group.kubernetes_node.id
+  source_security_group_id = aws_security_group.kubernetes_worker.id
   security_group_id        = aws_security_group.kubernetes_master.id
 }
 
-resource "aws_security_group" "kubernetes_node" {
-  name   = "sg_kubernetes_node"
+resource "aws_security_group" "kubernetes_worker" {
+  name   = "sg_kubernetes_worker"
   vpc_id = data.terraform_remote_state.network.outputs.vpc_id
 
   egress {
@@ -49,44 +49,44 @@ resource "aws_security_group" "kubernetes_node" {
   }
 
   tags = {
-    Name = "Kubernetes node sg"
+    Name = "Kubernetes worker sg"
   }
 }
 
-resource "aws_security_group_rule" "master_to_node" {
+resource "aws_security_group_rule" "master_to_worker" {
   type                     = "ingress"
   from_port                = 0
   to_port                  = 0
   protocol                 = "-1"
   source_security_group_id = aws_security_group.kubernetes_master.id
-  security_group_id        = aws_security_group.kubernetes_node.id
+  security_group_id        = aws_security_group.kubernetes_worker.id
 }
 
-resource "aws_security_group_rule" "node_to_node" {
+resource "aws_security_group_rule" "worker_to_worker" {
   type                     = "ingress"
   from_port                = 0
   to_port                  = 0
   protocol                 = "-1"
-  source_security_group_id = aws_security_group.kubernetes_node.id
-  security_group_id        = aws_security_group.kubernetes_node.id
+  source_security_group_id = aws_security_group.kubernetes_worker.id
+  security_group_id        = aws_security_group.kubernetes_worker.id
 }
 
-resource "aws_security_group_rule" "node_from_lb_http" {
+resource "aws_security_group_rule" "worker_from_lb_http" {
   type                     = "ingress"
   from_port                = local.nodeport_http
   to_port                  = local.nodeport_http
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.lb_web.id
-  security_group_id        = aws_security_group.kubernetes_node.id
+  security_group_id        = aws_security_group.kubernetes_worker.id
 }
 
-resource "aws_security_group_rule" "node_from_lb_https" {
+resource "aws_security_group_rule" "worker_from_lb_https" {
   type                     = "ingress"
   from_port                = local.nodeport_https
   to_port                  = local.nodeport_https
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.lb_web.id
-  security_group_id        = aws_security_group.kubernetes_node.id
+  security_group_id        = aws_security_group.kubernetes_worker.id
 }
 
 resource "aws_security_group" "lb_web" {

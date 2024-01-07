@@ -28,8 +28,8 @@ variable "subnet_public_nat" {
   default     = ["10.0.3.0/24", "10.0.4.0/24"]
 }
 
-variable "subnet_private_node" {
+variable "subnet_private_worker" {
   type        = list(string)
-  description = "Subnet private node"
+  description = "Subnet private worker"
   default     = ["10.0.5.0/24", "10.0.6.0/24"]
 }

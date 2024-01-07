@@ -30,6 +30,6 @@ destroy: ## Destroy the infrastructure
 		helm_release.calico \
 		helm_release.metrics_server \
 		helm_release.haproxy_ingress \
-		helm_release.longhorn
+		helm_release.longhorn || true
 
 	terraform destroy
