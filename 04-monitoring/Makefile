@@ -10,19 +10,19 @@ help: ## Show help
 
 .PHONY: init
 init: ## Init
-	terraform init \
+	tofu init \
 		-backend-config="bucket=${TF_VAR_bucket}" \
 		-backend-config="key=${TF_VAR_key_monitoring}" \
 		-backend-config="region=${TF_VAR_region}"
 
 .PHONY: apply
 apply: ## Create the infrastructure
-	terraform apply
+	tofu apply
 
 .PHONY: plan
 plan: ## Dry run
-	terraform plan
+	tofu plan
 
 .PHONY: destroy
 destroy: ## Destroy the infrastructure
-	terraform destroy
+	tofu destroy
