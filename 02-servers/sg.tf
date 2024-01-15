@@ -16,6 +16,13 @@ resource "aws_security_group" "kubernetes_master" {
     cidr_blocks = [var.my_ip_address]
   }
 
+  ingress {
+    from_port   = local.kube_api_port
+    to_port     = local.kube_api_port
+    protocol    = "tcp"
+    cidr_blocks = [for nat_ip in data.terraform_remote_state.network.outputs.aws_eip_nat_ip : "${nat_ip}/32"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -105,6 +112,13 @@ resource "aws_security_group" "lb_web" {
     to_port     = local.http_port
     protocol    = "tcp"
     cidr_blocks = [var.my_ip_address]
+  }
+
+  ingress {
+    from_port   = local.https_port
+    to_port     = local.https_port
+    protocol    = "tcp"
+    cidr_blocks = [for nat_ip in data.terraform_remote_state.network.outputs.aws_eip_nat_ip : "${nat_ip}/32"]
   }
 
   egress {

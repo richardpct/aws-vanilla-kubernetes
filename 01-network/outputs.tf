@@ -17,3 +17,8 @@ output "subnet_public_lb" {
   value       = aws_subnet.public_lb[*].id
   description = "Subnet public lb"
 }
+
+output "aws_eip_nat_ip" {
+  value       = aws_eip.nat[*].public_ip
+  description = "eip IPs"
+}
