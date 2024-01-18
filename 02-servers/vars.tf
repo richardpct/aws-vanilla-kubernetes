@@ -13,8 +13,8 @@ locals {
   nodeport_http    = 30080
   nodeport_https   = 30443
   anywhere         = ["0.0.0.0/0"]
-  worker_min         = 1
-  worker_max         = 1
+  worker_min       = 1
+  worker_max       = 1
   record_dns       = toset(["grafana", "vault", "www2"])
 }
 

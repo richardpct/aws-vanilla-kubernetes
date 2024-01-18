@@ -89,9 +89,9 @@ IPADDR=$(ip a s dev ens5 | awk '/inet /{print $2}' | awk -F / '{print $1}')
 NODENAME=$(hostname -s)
 
 sudo kubeadm init \
+  --skip-phases=addon/kube-proxy \
   --apiserver-advertise-address=$IPADDR \
   --apiserver-cert-extra-sans=$PUBLIC_IP,$IPADDR \
-  --pod-network-cidr=192.168.0.0/16 \
   --node-name $NODENAME
 
 sudo mkdir /root/.kube
@@ -112,5 +112,5 @@ sudo grep 'kubeadm join' /var/log/user-data.log > /nfs/kubeadm.sh
 sudo grep -- '--discovery-token-ca-cert-hash' /var/log/user-data.log >> /nfs/kubeadm.sh
 set -x
 sudo chmod 755 /nfs/kubeadm.sh
-sudo echo '/nfs 10.0.0.0/16(rw,sync,no_root_squash,no_subtree_check)' >> /etc/exports
+sudo echo '/nfs 192.168.0.0/16(rw,sync,no_root_squash,no_subtree_check)' >> /etc/exports
 sudo exportfs -a

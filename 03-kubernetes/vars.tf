@@ -22,3 +22,8 @@ variable "my_domain" {
   type        = string
   description = "domain name"
 }
+
+variable "key_servers" {
+  type        = string
+  description = "Servers key"
+}
