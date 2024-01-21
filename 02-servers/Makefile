@@ -1,4 +1,5 @@
-.DEFAULT_GOAL := help
+.DEFAULT_GOAL  := help
+TERRAFORM_LOCK := .terraform.lock.hcl
 
 .PHONY: help
 help: ## Show help
@@ -8,19 +9,23 @@ help: ## Show help
 	$(MAKEFILE_LIST) \
 	| grep -v awk
 
-.PHONY: init
-init: ## Init
+$(TERRAFORM_LOCK):
 	tofu init \
 		-backend-config="bucket=${TF_VAR_bucket}" \
 		-backend-config="key=${TF_VAR_key_servers}" \
 		-backend-config="region=${TF_VAR_region}"
 
+.PHONY: init
+init: $(TERRAFORM_LOCK) ## Init
+
 .PHONY: apply
+apply: init
 apply: MY_IP = $(shell curl -s https://ifconfig.co)/32
 apply: ## Create the infrastructure
 	tofu apply -var="my_ip_address=$(MY_IP)"
 
 .PHONY: plan
+plan: init
 plan: MY_IP = $(shell curl -s https://ifconfig.co)/32
 plan: ## Dry run
 	tofu plan -var="my_ip_address=$(MY_IP)"
@@ -28,3 +33,7 @@ plan: ## Dry run
 .PHONY: destroy
 destroy: ## Destroy the infrastructure
 	tofu destroy
+
+.PHONY: clean
+clean: ## Clean
+	rm -rfv .terraform*
