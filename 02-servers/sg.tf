@@ -17,6 +17,13 @@ resource "aws_security_group" "kubernetes_master" {
   }
 
   ingress {
+    from_port   = local.hubble_port
+    to_port     = local.hubble_port
+    protocol    = "tcp"
+    cidr_blocks = [var.my_ip_address]
+  }
+
+  ingress {
     from_port   = local.kube_api_port
     to_port     = local.kube_api_port
     protocol    = "tcp"

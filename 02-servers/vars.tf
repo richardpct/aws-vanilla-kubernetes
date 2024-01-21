@@ -10,11 +10,12 @@ locals {
   https_port       = 443
   nfs_port         = 2049
   kube_api_port    = 6443
+  hubble_port      = 4245
   nodeport_http    = 30080
   nodeport_https   = 30443
   anywhere         = ["0.0.0.0/0"]
-  worker_min       = 1
-  worker_max       = 1
+  worker_min       = 2
+  worker_max       = 2
   record_dns       = toset(["grafana", "vault", "www2"])
 }
 

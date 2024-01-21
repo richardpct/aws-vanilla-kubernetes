@@ -40,6 +40,14 @@ resource "helm_release" "cilium" {
     name  = "k8sServicePort"
     value = "6443"
   }
+  set {
+    name  = "hubble.relay.enabled"
+    value = "true"
+  }
+  set {
+    name  = "hubble.ui.enabled"
+    value = "true"
+  }
 }
 
 resource "helm_release" "metrics_server" {
