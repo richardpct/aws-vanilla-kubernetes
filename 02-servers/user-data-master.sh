@@ -64,10 +64,6 @@ sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/c
 curl -L -O https://github.com/opencontainers/runc/releases/download/v${runc_vers}/runc.amd64
 sudo install -m 755 runc.amd64 /usr/local/sbin/runc
 
-curl -L -O https://github.com/containernetworking/plugins/releases/download/v${cni_plugins_vers}/cni-plugins-linux-amd64-v${cni_plugins_vers}.tgz
-sudo mkdir -p /opt/cni/bin
-sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v${cni_plugins_vers}.tgz
-
 sudo systemctl daemon-reload
 sudo systemctl start containerd
 sudo systemctl enable containerd
