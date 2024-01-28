@@ -28,13 +28,7 @@ plan: init ## Dry run
 
 .PHONY: destroy
 destroy: ## Destroy the infrastructure
-	tofu state rm \
-		kubernetes_secret.www2_cert \
-		helm_release.cilium \
-		helm_release.metrics_server \
-		helm_release.haproxy_ingress \
-		helm_release.longhorn || true
-
+	kubectl -n longhorn-system patch -p '{"value": "true"}' --type=merge lhs deleting-confirmation-flag
 	tofu destroy
 
 .PHONY: clean
