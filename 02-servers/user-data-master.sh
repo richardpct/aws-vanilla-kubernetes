@@ -28,8 +28,8 @@ EOF
 
 sudo sysctl --system
 
-curl -L -O https://github.com/containerd/containerd/releases/download/v${containerd_vers}/containerd-${containerd_vers}-linux-amd64.tar.gz
-sudo tar Cxzvf /usr/local containerd-${containerd_vers}-linux-amd64.tar.gz
+curl -L -O https://github.com/containerd/containerd/releases/download/v${containerd_vers}/containerd-${containerd_vers}-linux-${archi}.tar.gz
+sudo tar Cxzvf /usr/local containerd-${containerd_vers}-linux-${archi}.tar.gz
 
 cat <<EOF | sudo tee /lib/systemd/system/containerd.service
 [Unit]
@@ -61,8 +61,8 @@ sudo mkdir /etc/containerd
 sudo containerd config default > /etc/containerd/config.toml
 sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
 
-curl -L -O https://github.com/opencontainers/runc/releases/download/v${runc_vers}/runc.amd64
-sudo install -m 755 runc.amd64 /usr/local/sbin/runc
+curl -L -O https://github.com/opencontainers/runc/releases/download/v${runc_vers}/runc.${archi}
+sudo install -m 755 runc.${archi} /usr/local/sbin/runc
 
 sudo systemctl daemon-reload
 sudo systemctl start containerd
@@ -96,9 +96,9 @@ mkdir /home/${linux_user}/.kube
 sudo install -m 644 -o ${linux_user} -g ${linux_user} /etc/kubernetes/admin.conf /home/${linux_user}/.kube/
 mv /home/${linux_user}/.kube/admin.conf /home/${linux_user}/.kube/config
 
-sudo curl -O https://get.helm.sh/helm-v${helm_vers}-linux-amd64.tar.gz
-sudo tar zxf helm-v${helm_vers}-linux-amd64.tar.gz
-sudo cp linux-amd64/helm /usr/local/bin/
+sudo curl -O https://get.helm.sh/helm-v${helm_vers}-linux-${archi}.tar.gz
+sudo tar zxf helm-v${helm_vers}-linux-${archi}.tar.gz
+sudo cp linux-${archi}/helm /usr/local/bin/
 
 sudo apt-get install -y nfs-common nfs-kernel-server
 

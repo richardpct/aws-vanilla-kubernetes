@@ -29,8 +29,8 @@ EOF
 
 sudo sysctl --system
 
-curl -L -O https://github.com/containerd/containerd/releases/download/v${containerd_vers}/containerd-${containerd_vers}-linux-amd64.tar.gz
-sudo tar Cxzvf /usr/local containerd-${containerd_vers}-linux-amd64.tar.gz
+curl -L -O https://github.com/containerd/containerd/releases/download/v${containerd_vers}/containerd-${containerd_vers}-linux-${archi}.tar.gz
+sudo tar Cxzvf /usr/local containerd-${containerd_vers}-linux-${archi}.tar.gz
 
 cat <<EOF | sudo tee /lib/systemd/system/containerd.service
 [Unit]
@@ -62,8 +62,8 @@ sudo mkdir /etc/containerd
 sudo containerd config default > /etc/containerd/config.toml
 sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
 
-curl -L -O https://github.com/opencontainers/runc/releases/download/v${runc_vers}/runc.amd64
-sudo install -m 755 runc.amd64 /usr/local/sbin/runc
+curl -L -O https://github.com/opencontainers/runc/releases/download/v${runc_vers}/runc.${archi}
+sudo install -m 755 runc.${archi} /usr/local/sbin/runc
 
 sudo systemctl daemon-reload
 sudo systemctl start containerd

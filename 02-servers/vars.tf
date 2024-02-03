@@ -1,22 +1,22 @@
 locals {
-  linux_user       = "ubuntu"
-  kube_vers        = "1.29"
-  helm_vers        = "3.13.3"
-  containerd_vers  = "1.7.11"
-  runc_vers        = "1.1.10"
-  cni_plugins_vers = "1.4.0"
-  ssh_port         = 22
-  http_port        = 80
-  https_port       = 443
-  nfs_port         = 2049
-  kube_api_port    = 6443
-  hubble_port      = 4245
-  nodeport_http    = 30080
-  nodeport_https   = 30443
-  anywhere         = ["0.0.0.0/0"]
-  worker_min       = 2
-  worker_max       = 2
-  record_dns       = toset(["grafana", "vault", "www2"])
+  linux_user      = "ubuntu"
+  archi           = "arm64" // amd64 or arm64
+  kube_vers       = "1.29"
+  helm_vers       = "3.14.0"
+  containerd_vers = "1.7.13"
+  runc_vers       = "1.1.12"
+  ssh_port        = 22
+  http_port       = 80
+  https_port      = 443
+  nfs_port        = 2049
+  kube_api_port   = 6443
+  hubble_port     = 4245
+  nodeport_http   = 30080
+  nodeport_https  = 30443
+  anywhere        = ["0.0.0.0/0"]
+  worker_min      = 2
+  worker_max      = 2
+  record_dns      = toset(["grafana", "vault", "www2"])
 }
 
 variable "region" {
@@ -38,13 +38,13 @@ variable "key_network" {
 variable "instance_type_master" {
   type        = string
   description = "instance type"
-  default     = "t3.small"
+  default     = "t4g.small"
 }
 
 variable "instance_type_worker" {
   type        = string
   description = "instance type"
-  default     = "t3.small"
+  default     = "t4g.small"
 }
 
 variable "root_size_master" {

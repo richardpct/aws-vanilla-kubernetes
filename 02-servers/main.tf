@@ -8,7 +8,7 @@ data "aws_ami" "linux" {
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-${local.archi}-server-*"]
   }
 
   filter {
@@ -23,11 +23,11 @@ resource "aws_instance" "kubernetes_master" {
   ami                    = data.aws_ami.linux.id
   user_data              = templatefile("user-data-master.sh",
                                         { linux_user       = local.linux_user,
+                                          archi            = local.archi,
                                           kube_vers        = local.kube_vers,
                                           helm_vers        = local.helm_vers,
                                           containerd_vers  = local.containerd_vers,
-                                          runc_vers        = local.runc_vers,
-                                          cni_plugins_vers = local.cni_plugins_vers })
+                                          runc_vers        = local.runc_vers })
   instance_type          = var.instance_type_master
   key_name               = aws_key_pair.deployer.key_name
   subnet_id              = data.terraform_remote_state.network.outputs.subnet_public_id
@@ -83,11 +83,11 @@ resource "aws_launch_configuration" "kubernetes_worker" {
   image_id        = data.aws_ami.linux.id
   user_data       = templatefile("user-data-worker.sh",
                                  { kubernetes_master_ip = aws_instance.kubernetes_master.private_ip,
-                                   kube_vers = local.kube_vers,
-                                   containerd_vers  = local.containerd_vers,
-                                   runc_vers        = local.runc_vers,
-                                   cni_plugins_vers = local.cni_plugins_vers,
-                                   nfs_port         = local.nfs_port })
+                                   archi                = local.archi,
+                                   kube_vers            = local.kube_vers,
+                                   containerd_vers      = local.containerd_vers,
+                                   runc_vers            = local.runc_vers,
+                                   nfs_port             = local.nfs_port })
 
   instance_type   = var.instance_type_worker
   key_name        = aws_key_pair.deployer.key_name
