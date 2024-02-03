@@ -28,7 +28,7 @@ plan: init ## Dry run
 
 .PHONY: destroy
 destroy: ## Destroy the infrastructure
-	kubectl -n longhorn-system patch -p '{"value": "true"}' --type=merge lhs deleting-confirmation-flag
+	kubectl -n longhorn-system patch -p '{"value": "true"}' --type=merge lhs deleting-confirmation-flag || true
 	tofu destroy
 
 .PHONY: clean
