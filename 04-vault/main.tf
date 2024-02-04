@@ -33,7 +33,7 @@ resource "helm_release" "vault" {
   }
   set {
     name  = "server.ingress.ingressClassName"
-    value = "haproxy"
+    value = "cilium"
   }
   set {
     name  = "server.ingress.pathType"

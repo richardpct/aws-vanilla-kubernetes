@@ -65,7 +65,7 @@ resource "helm_release" "loki-stack" {
   }
   set {
     name  = "grafana.ingress.ingressClassName"
-    value = "haproxy"
+    value = "cilium"
   }
   set {
     name  = "grafana.ingress.hosts[0]"

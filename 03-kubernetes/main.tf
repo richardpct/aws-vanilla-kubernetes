@@ -33,6 +33,26 @@ resource "helm_release" "cilium" {
     value = "true"
   }
   set {
+    name  = "ingressController.enabled"
+    value = "true"
+  }
+  set {
+    name  = "ingressController.loadbalancerMode"
+    value = "shared"
+  }
+  set {
+    name  = "ingressController.service.type"
+    value = "NodePort"
+  }
+  set {
+    name  = "ingressController.service.insecureNodePort"
+    value = "30080"
+  }
+  set {
+    name  = "ingressController.service.secureNodePort"
+    value = "30443"
+  }
+  set {
     name  = "k8sServiceHost"
     value = data.terraform_remote_state.servers.outputs.kubernetes_master_ip
   }
@@ -61,30 +81,6 @@ resource "helm_release" "metrics_server" {
   set {
     name  = "args"
     value = "{--kubelet-insecure-tls=true}"
-  }
-}
-
-resource "helm_release" "haproxy_ingress" {
-  name             = "haproxytech"
-  repository       = "https://haproxytech.github.io/helm-charts"
-  chart            = "kubernetes-ingress"
-  namespace        = "haproxy-controller"
-  create_namespace = true
-  force_update     = true
-
-  depends_on = [helm_release.cilium]
-
-  set {
-    name  = "controller.service.nodePorts.http"
-    value = local.nodeport_http
-  }
-  set {
-    name  = "controller.service.nodePorts.https"
-    value = 30443
-  }
-  set {
-    name  = "controller.service.nodePorts.stat"
-    value = 30002
   }
 }
 
