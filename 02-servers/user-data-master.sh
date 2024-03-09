@@ -10,7 +10,8 @@ sudo apt-get install -y \
   apt-transport-https \
   ca-certificates \
   curl \
-  gnupg
+  gnupg \
+  etcd-client
 
 cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
 overlay
@@ -95,6 +96,7 @@ sudo cp /etc/kubernetes/admin.conf /root/.kube/config
 mkdir /home/${linux_user}/.kube
 sudo install -m 644 -o ${linux_user} -g ${linux_user} /etc/kubernetes/admin.conf /home/${linux_user}/.kube/
 mv /home/${linux_user}/.kube/admin.conf /home/${linux_user}/.kube/config
+echo 'alias k=kubectl' >> /root/.bashrc
 
 sudo curl -O https://get.helm.sh/helm-v${helm_vers}-linux-${archi}.tar.gz
 sudo tar zxf helm-v${helm_vers}-linux-${archi}.tar.gz
