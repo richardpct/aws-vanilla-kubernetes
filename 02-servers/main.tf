@@ -90,6 +90,7 @@ resource "aws_launch_configuration" "kubernetes_worker" {
                                    nfs_port             = local.nfs_port })
 
   instance_type   = var.instance_type_worker
+  spot_price      = local.worker_price
   key_name        = aws_key_pair.deployer.key_name
   security_groups = [aws_security_group.kubernetes_worker.id]
 

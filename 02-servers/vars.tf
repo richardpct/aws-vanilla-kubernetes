@@ -14,6 +14,7 @@ locals {
   nodeport_http   = 30080
   nodeport_https  = 30443
   anywhere        = ["0.0.0.0/0"]
+  worker_price    = "0.015"
   worker_min      = 2
   worker_max      = 2
   record_dns      = toset(["grafana", "vault", "www2"])
@@ -44,7 +45,7 @@ variable "instance_type_master" {
 variable "instance_type_worker" {
   type        = string
   description = "instance type"
-  default     = "t4g.small"
+  default     = "t4g.medium"
 }
 
 variable "root_size_master" {
