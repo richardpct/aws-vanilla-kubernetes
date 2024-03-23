@@ -14,6 +14,9 @@ locals {
   nodeport_http   = 30080
   nodeport_https  = 30443
   anywhere        = ["0.0.0.0/0"]
+  master_price    = "0.006"
+  master_min      = 2
+  master_max      = 2
   worker_price    = "0.015"
   worker_min      = 2
   worker_max      = 2

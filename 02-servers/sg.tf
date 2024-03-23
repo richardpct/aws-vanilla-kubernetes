@@ -85,6 +85,15 @@ resource "aws_security_group_rule" "worker_to_worker" {
   security_group_id        = aws_security_group.kubernetes_worker.id
 }
 
+resource "aws_security_group_rule" "master_from_lb_api" {
+  type                     = "ingress"
+  from_port                = local.kube_api_port
+  to_port                  = local.kube_api_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.lb_api.id
+  security_group_id        = aws_security_group.kubernetes_master.id
+}
+
 resource "aws_security_group_rule" "worker_from_lb_http" {
   type                     = "ingress"
   from_port                = local.nodeport_http
@@ -101,6 +110,29 @@ resource "aws_security_group_rule" "worker_from_lb_https" {
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.lb_web.id
   security_group_id        = aws_security_group.kubernetes_worker.id
+}
+
+resource "aws_security_group" "lb_api" {
+  name   = "sg_lb_api"
+  vpc_id = data.terraform_remote_state.network.outputs.vpc_id
+
+  ingress {
+    from_port   = local.kube_api_port
+    to_port     = local.kube_api_port
+    protocol    = "tcp"
+    cidr_blocks = [var.my_ip_address]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = local.anywhere
+  }
+
+  tags = {
+    Name = "lb_api_sg"
+  }
 }
 
 resource "aws_security_group" "lb_web" {
