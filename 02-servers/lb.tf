@@ -29,14 +29,17 @@ resource "aws_lb" "api_internal" {
   internal            = true
   load_balancer_type  = "network"
   security_groups     = [aws_security_group.lb_api_internal.id]
-  subnets             = data.terraform_remote_state.network.outputs.subnet_private_lb[*]
+  subnets             = data.terraform_remote_state.network.outputs.subnet_private_worker[*]
 }
 
 resource "aws_lb_target_group" "api_internal" {
-  name     = "lb-target-group-api-internal"
-  port     = local.kube_api_port
-  protocol = "TCP"
-  vpc_id   = data.terraform_remote_state.network.outputs.vpc_id
+  name               = "lb-target-group-api-internal"
+  port               = local.kube_api_port
+  protocol           = "TCP"
+  # ec2 can reach out to himself through the NLB
+  # see https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-troubleshooting.html
+  preserve_client_ip = false
+  vpc_id             = data.terraform_remote_state.network.outputs.vpc_id
 }
 
 resource "aws_lb_listener" "api_internal" {
