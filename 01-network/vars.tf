@@ -33,3 +33,9 @@ variable "subnet_private_worker" {
   description = "Subnet private worker"
   default     = ["192.168.7.0/24", "192.168.8.0/24", "192.168.9.0/24"]
 }
+
+variable "subnet_private_lb" {
+  type        = list(string)
+  description = "Subnet private lb"
+  default     = ["192.168.10.0/24", "192.168.11.0/24", "192.168.12.0/24"]
+}

@@ -14,12 +14,15 @@ locals {
   nodeport_http   = 30080
   nodeport_https  = 30443
   anywhere        = ["0.0.0.0/0"]
+  bastion_price   = "0.003"
+  bastion_min     = 1
+  bastion_max     = 1
   master_price    = "0.006"
   master_min      = 2
   master_max      = 2
   worker_price    = "0.015"
-  worker_min      = 2
-  worker_max      = 2
+  worker_min      = 1
+  worker_max      = 1
   record_dns      = toset(["grafana", "vault", "www2"])
 }
 
@@ -37,6 +40,12 @@ variable "bucket" {
 variable "key_network" {
   type        = string
   description = "Network key"
+}
+
+variable "instance_type_bastion" {
+  type        = string
+  description = "instance type"
+  default     = "t4g.nano"
 }
 
 variable "instance_type_master" {

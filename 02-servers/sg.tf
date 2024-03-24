@@ -1,3 +1,33 @@
+resource "aws_security_group" "bastion" {
+  name   = "sg_bastion"
+  vpc_id = data.terraform_remote_state.network.outputs.vpc_id
+
+  ingress {
+    from_port   = local.ssh_port
+    to_port     = local.ssh_port
+    protocol    = "tcp"
+    cidr_blocks = [var.my_ip_address]
+  }
+
+  egress {
+    from_port   = local.http_port
+    to_port     = local.http_port
+    protocol    = "tcp"
+    cidr_blocks = local.anywhere
+  }
+
+  egress {
+    from_port   = local.https_port
+    to_port     = local.https_port
+    protocol    = "tcp"
+    cidr_blocks = local.anywhere
+  }
+
+  tags = {
+    Name = "bastion"
+  }
+}
+
 resource "aws_security_group" "kubernetes_master" {
   name   = "sg_kubernetes_master"
   vpc_id = data.terraform_remote_state.network.outputs.vpc_id
@@ -40,6 +70,42 @@ resource "aws_security_group" "kubernetes_master" {
   tags = {
     Name = "Kubernetes master sg"
   }
+}
+
+resource "aws_security_group_rule" "master_ingress_bastion" {
+  type                     = "ingress"
+  from_port                = local.ssh_port
+  to_port                  = local.ssh_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.bastion.id
+  security_group_id        = aws_security_group.kubernetes_master.id
+}
+
+resource "aws_security_group_rule" "bastion_egress_master" {
+  type                     = "egress"
+  from_port                = local.ssh_port
+  to_port                  = local.ssh_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.kubernetes_master.id
+  security_group_id        = aws_security_group.bastion.id
+}
+
+resource "aws_security_group_rule" "worker_ingress_bastion" {
+  type                     = "ingress"
+  from_port                = local.ssh_port
+  to_port                  = local.ssh_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.bastion.id
+  security_group_id        = aws_security_group.kubernetes_worker.id
+}
+
+resource "aws_security_group_rule" "bastion_egress_worker" {
+  type                     = "egress"
+  from_port                = local.ssh_port
+  to_port                  = local.ssh_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.kubernetes_worker.id
+  security_group_id        = aws_security_group.bastion.id
 }
 
 resource "aws_security_group_rule" "master_ingress_worker" {
@@ -94,6 +160,42 @@ resource "aws_security_group_rule" "master_from_lb_api" {
   security_group_id        = aws_security_group.kubernetes_master.id
 }
 
+resource "aws_security_group_rule" "master_from_lb_api_internal" {
+  type                     = "ingress"
+  from_port                = local.kube_api_port
+  to_port                  = local.kube_api_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.lb_api_internal.id
+  security_group_id        = aws_security_group.kubernetes_master.id
+}
+
+resource "aws_security_group_rule" "lb_api_internal_from_master" {
+  type                     = "ingress"
+  from_port                = local.kube_api_port
+  to_port                  = local.kube_api_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.kubernetes_master.id
+  security_group_id        = aws_security_group.lb_api_internal.id
+}
+
+resource "aws_security_group_rule" "worker_from_lb_api_internal" {
+  type                     = "ingress"
+  from_port                = local.kube_api_port
+  to_port                  = local.kube_api_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.lb_api_internal.id
+  security_group_id        = aws_security_group.kubernetes_worker.id
+}
+
+resource "aws_security_group_rule" "lb_api_internal_from_worker" {
+  type                     = "ingress"
+  from_port                = local.kube_api_port
+  to_port                  = local.kube_api_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.kubernetes_worker.id
+  security_group_id        = aws_security_group.lb_api_internal.id
+}
+
 resource "aws_security_group_rule" "worker_from_lb_http" {
   type                     = "ingress"
   from_port                = local.nodeport_http
@@ -132,6 +234,22 @@ resource "aws_security_group" "lb_api" {
 
   tags = {
     Name = "lb_api_sg"
+  }
+}
+
+resource "aws_security_group" "lb_api_internal" {
+  name   = "sg_lb_api_internal"
+  vpc_id = data.terraform_remote_state.network.outputs.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = local.anywhere
+  }
+
+  tags = {
+    Name = "lb_api_sg_internal"
   }
 }
 

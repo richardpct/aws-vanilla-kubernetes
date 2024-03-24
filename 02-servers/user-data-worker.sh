@@ -99,13 +99,13 @@ sudo mount /var/lib/longhorn
 
 sudo apt-get install -y nfs-common
 
-while ! nc -w1 ${kubernetes_master_ip} ${nfs_port}; do
-  sleep 5
-done
-
-while ! sudo mount -t nfs ${kubernetes_master_ip}:/nfs /mnt; do
-  sleep 5
-done
-
-sudo /mnt/kubeadm.sh
-sudo umount /mnt
+#while ! nc -w1 $kube_master_ip ${nfs_port}; do
+#  sleep 5
+#done
+#
+#while ! sudo mount -t nfs $kube_master_ip:/nfs /mnt; do
+#  sleep 5
+#done
+#
+#sudo /mnt/kubeadm.sh
+#sudo umount /mnt

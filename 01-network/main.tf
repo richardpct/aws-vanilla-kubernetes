@@ -60,6 +60,17 @@ resource "aws_subnet" "public_nat" {
   }
 }
 
+resource "aws_subnet" "private_lb" {
+  count             = length(var.subnet_private_lb)
+  vpc_id            = aws_vpc.my_vpc.id
+  cidr_block        = var.subnet_private_lb[count.index]
+  availability_zone = data.aws_availability_zones.available.names[count.index]
+
+  tags = {
+    Name = "subnet_private_lb_${count.index}"
+  }
+}
+
 resource "aws_subnet" "private_worker" {
   count             = length(var.subnet_private_worker)
   vpc_id            = aws_vpc.my_vpc.id

@@ -13,6 +13,11 @@ output "subnet_private_worker" {
   description = "Subnet private worker"
 }
 
+output "subnet_private_lb" {
+  value       = aws_subnet.private_lb[*].id
+  description = "Subnet private lb"
+}
+
 output "subnet_public_lb" {
   value       = aws_subnet.public_lb[*].id
   description = "Subnet public lb"

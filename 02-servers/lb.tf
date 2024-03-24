@@ -24,6 +24,32 @@ resource "aws_lb_listener" "api" {
   }
 }
 
+resource "aws_lb" "api_internal" {
+  name                = "lb-api-internal"
+  internal            = true
+  load_balancer_type  = "network"
+  security_groups     = [aws_security_group.lb_api_internal.id]
+  subnets             = data.terraform_remote_state.network.outputs.subnet_private_lb[*]
+}
+
+resource "aws_lb_target_group" "api_internal" {
+  name     = "lb-target-group-api-internal"
+  port     = local.kube_api_port
+  protocol = "TCP"
+  vpc_id   = data.terraform_remote_state.network.outputs.vpc_id
+}
+
+resource "aws_lb_listener" "api_internal" {
+  load_balancer_arn = aws_lb.api_internal.arn
+  port              = local.kube_api_port
+  protocol          = "TCP"
+
+  default_action {
+    target_group_arn = aws_lb_target_group.api_internal.arn
+    type             = "forward"
+  }
+}
+
 resource "aws_lb" "web" {
   name               = "lb-web"
   internal           = false
