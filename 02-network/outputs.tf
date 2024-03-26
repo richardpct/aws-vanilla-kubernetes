@@ -3,14 +3,9 @@ output "vpc_id" {
   description = "VPC ID"
 }
 
-output "subnet_public_id" {
-  value       = aws_subnet.public.id
-  description = "Subnet public ID"
-}
-
-output "subnet_private_worker" {
-  value       = aws_subnet.private_worker[*].id
-  description = "Subnet private worker"
+output "subnet_public" {
+  value       = aws_subnet.public[*].id
+  description = "Subnet public"
 }
 
 output "subnet_private_lb" {
@@ -18,9 +13,9 @@ output "subnet_private_lb" {
   description = "Subnet private lb"
 }
 
-output "subnet_public_lb" {
-  value       = aws_subnet.public_lb[*].id
-  description = "Subnet public lb"
+output "subnet_private" {
+  value       = aws_subnet.private[*].id
+  description = "Subnet private"
 }
 
 output "aws_eip_nat_ip" {

@@ -16,15 +16,6 @@ resource "aws_internet_gateway" "my_igw" {
   }
 }
 
-resource "aws_subnet" "public" {
-  vpc_id     = aws_vpc.my_vpc.id
-  cidr_block = var.subnet_public
-
-  tags = {
-    Name = "subnet_public"
-  }
-}
-
 resource "aws_default_route_table" "route" {
   default_route_table_id = aws_vpc.my_vpc.default_route_table_id
 
@@ -38,14 +29,14 @@ resource "aws_default_route_table" "route" {
   }
 }
 
-resource "aws_subnet" "public_lb" {
-  count             = length(var.subnet_public_lb)
+resource "aws_subnet" "public" {
+  count             = length(var.subnet_public)
   vpc_id            = aws_vpc.my_vpc.id
-  cidr_block        = var.subnet_public_lb[count.index]
+  cidr_block        = var.subnet_public[count.index]
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = {
-    Name = "subnet_public_lb_${count.index}"
+    Name = "subnet_public_${count.index}"
   }
 }
 
@@ -71,14 +62,14 @@ resource "aws_subnet" "private_lb" {
   }
 }
 
-resource "aws_subnet" "private_worker" {
-  count             = length(var.subnet_private_worker)
+resource "aws_subnet" "private" {
+  count             = length(var.subnet_private)
   vpc_id            = aws_vpc.my_vpc.id
-  cidr_block        = var.subnet_private_worker[count.index]
+  cidr_block        = var.subnet_private[count.index]
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = {
-    Name = "subnet_private_worker_${count.index}"
+    Name = "subnet_private_${count.index}"
   }
 }
 
@@ -129,13 +120,8 @@ resource "aws_route_table" "route_nat" {
 }
 
 resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
-  route_table_id = aws_default_route_table.route.id
-}
-
-resource "aws_route_table_association" "public_lb" {
-  count          = length(var.subnet_public_lb)
-  subnet_id      = aws_subnet.public_lb[count.index].id
+  count          = length(var.subnet_public)
+  subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.route.id
 }
 
@@ -145,8 +131,8 @@ resource "aws_route_table_association" "public_nat" {
   route_table_id = aws_route_table.route.id
 }
 
-resource "aws_route_table_association" "private_worker" {
-  count          = length(var.subnet_public_nat)
-  subnet_id      = aws_subnet.private_worker[count.index].id
+resource "aws_route_table_association" "private" {
+  count          = length(var.subnet_private)
+  subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.route_nat[count.index].id
 }

@@ -3,7 +3,7 @@ resource "aws_lb" "api" {
   internal           = false
   load_balancer_type = "network"
   security_groups    = [aws_security_group.lb_api.id]
-  subnets            = data.terraform_remote_state.network.outputs.subnet_public_lb[*]
+  subnets            = data.terraform_remote_state.network.outputs.subnet_public[*]
 }
 
 resource "aws_lb_target_group" "api" {
@@ -29,7 +29,7 @@ resource "aws_lb" "api_internal" {
   internal            = true
   load_balancer_type  = "network"
   security_groups     = [aws_security_group.lb_api_internal.id]
-  subnets             = data.terraform_remote_state.network.outputs.subnet_private_worker[*]
+  subnets             = data.terraform_remote_state.network.outputs.subnet_private[*]
 }
 
 resource "aws_lb_target_group" "api_internal" {
@@ -58,7 +58,7 @@ resource "aws_lb" "web" {
   internal           = false
   load_balancer_type = "network"
   security_groups    = [aws_security_group.lb_web.id]
-  subnets            = data.terraform_remote_state.network.outputs.subnet_public_lb[*]
+  subnets            = data.terraform_remote_state.network.outputs.subnet_public[*]
 }
 
 resource "aws_lb_target_group" "http" {

@@ -62,7 +62,7 @@ resource "aws_launch_configuration" "bastion" {
 resource "aws_autoscaling_group" "bastion" {
   name                 = "asg_bastion"
   launch_configuration = aws_launch_configuration.bastion.id
-  vpc_zone_identifier  = data.terraform_remote_state.network.outputs.subnet_public_lb[*]
+  vpc_zone_identifier  = data.terraform_remote_state.network.outputs.subnet_public[*]
   min_size             = local.bastion_min
   max_size             = local.bastion_max
 
@@ -96,7 +96,7 @@ resource "aws_launch_configuration" "kubernetes_master" {
 resource "aws_autoscaling_group" "kubernetes_master" {
   name                 = "Kubernetes master"
   launch_configuration = aws_launch_configuration.kubernetes_master.name
-  vpc_zone_identifier  = data.terraform_remote_state.network.outputs.subnet_private_worker[*]
+  vpc_zone_identifier  = data.terraform_remote_state.network.outputs.subnet_private[*]
   target_group_arns    = [aws_lb_target_group.api.arn, aws_lb_target_group.api_internal.arn]
   min_size             = local.master_min
   max_size             = local.master_max
@@ -164,7 +164,7 @@ resource "aws_launch_configuration" "kubernetes_worker" {
 resource "aws_autoscaling_group" "kubernetes_worker" {
   name                 = "Kubernetes worker"
   launch_configuration = aws_launch_configuration.kubernetes_worker.name
-  vpc_zone_identifier  = data.terraform_remote_state.network.outputs.subnet_private_worker[*]
+  vpc_zone_identifier  = data.terraform_remote_state.network.outputs.subnet_private[*]
   target_group_arns    = [aws_lb_target_group.http.arn, aws_lb_target_group.https.arn]
   min_size             = local.worker_min
   max_size             = local.worker_max
