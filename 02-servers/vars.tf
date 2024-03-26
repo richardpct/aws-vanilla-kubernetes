@@ -17,10 +17,10 @@ locals {
   bastion_price   = "0.003"
   bastion_min     = 1
   bastion_max     = 1
-  master_price    = "0.006"
+  master_price    = "0.007"
   master_min      = 2
   master_max      = 2
-  worker_price    = "0.015"
+  worker_price    = "0.01"
   worker_min      = 1
   worker_max      = 1
   record_dns      = toset(["grafana", "vault", "www2"])
@@ -29,7 +29,6 @@ locals {
 variable "region" {
   type        = string
   description = "Region"
-  default     = "eu-west-3"
 }
 
 variable "bucket" {
