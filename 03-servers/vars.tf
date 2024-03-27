@@ -17,7 +17,7 @@ locals {
   bastion_price   = "0.003"
   bastion_min     = 1
   bastion_max     = 1
-  master_price    = "0.007"
+  master_price    = "0.0085"
   master_min      = 2
   master_max      = 2
   worker_price    = "0.01"

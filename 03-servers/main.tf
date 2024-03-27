@@ -46,7 +46,9 @@ resource "aws_eip" "bastion" {
 resource "aws_launch_configuration" "bastion" {
   name                        = "bastion"
   image_id                    = data.aws_ami.amazonlinux.id
-  user_data                   = templatefile("${path.module}/user-data-bastion.sh", {eip_bastion_id = aws_eip.bastion.id})
+  user_data                   = templatefile("${path.module}/user-data-bastion.sh",
+                                            { eip_bastion_id = aws_eip.bastion.id,
+                                              region         = var.region })
   instance_type               = var.instance_type_bastion
   spot_price                  = local.bastion_price
   key_name                    = aws_key_pair.deployer.key_name
@@ -120,15 +122,15 @@ resource "aws_autoscaling_group" "kubernetes_master" {
 #
 #  depends_on = [aws_instance.kubernetes_master]
 #}
-#
-#resource "null_resource" "clean_ssh_know_hosts" {
-#  provisioner "local-exec" {
-#    command = <<EOF
-#sed -i -e "/kube.${var.my_domain}/d" ~/.ssh/known_hosts
-#    EOF
-#  }
-#  depends_on = [aws_instance.kubernetes_master]
-#}
+
+resource "null_resource" "clean_ssh_know_hosts" {
+  provisioner "local-exec" {
+    command = <<EOF
+sed -i -e "/bastion.${var.my_domain}/d" ~/.ssh/known_hosts
+    EOF
+  }
+  depends_on = [aws_autoscaling_group.bastion]
+}
 
 resource "aws_launch_configuration" "kubernetes_worker" {
   name            = "Kubernetes worker"
