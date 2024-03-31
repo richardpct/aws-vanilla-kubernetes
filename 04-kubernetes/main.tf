@@ -54,7 +54,7 @@ resource "helm_release" "cilium" {
   }
   set {
     name  = "k8sServiceHost"
-    value = data.terraform_remote_state.servers.outputs.kubernetes_master_ip
+    value = data.terraform_remote_state.servers.outputs.kubernetes_api_internal
   }
   set {
     name  = "k8sServicePort"

@@ -11,7 +11,8 @@ sudo apt-get install -y \
   ca-certificates \
   curl \
   gnupg \
-  etcd-client
+  etcd-client \
+  nfs-common
 
 cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
 overlay
@@ -81,15 +82,14 @@ while ! curl -s ifconfig.me; do
   sleep 2
 done
 
-PUBLIC_IP=$(curl -s ifconfig.me)
-IPADDR=$(ip a s dev ens5 | awk '/inet /{print $2}' | awk -F / '{print $1}')
 NODENAME=$(hostname -s)
 
 sudo kubeadm init \
+  --control-plane-endpoint "${kube_api_internal}:6443" \
   --skip-phases=addon/kube-proxy \
-  --apiserver-advertise-address=$IPADDR \
-  --apiserver-cert-extra-sans=$PUBLIC_IP,$IPADDR \
-  --node-name $NODENAME
+  --apiserver-cert-extra-sans=${kube_api_internet},${kube_api_internal} \
+  --node-name $NODENAME \
+  --upload-certs
 
 sudo mkdir /root/.kube
 sudo cp /etc/kubernetes/admin.conf /root/.kube/config
@@ -102,13 +102,20 @@ sudo curl -O https://get.helm.sh/helm-v${helm_vers}-linux-${archi}.tar.gz
 sudo tar zxf helm-v${helm_vers}-linux-${archi}.tar.gz
 sudo cp linux-${archi}/helm /usr/local/bin/
 
-sudo apt-get install -y nfs-common nfs-kernel-server
-
 sudo mkdir /nfs
+
+while ! nc -w1 ${efs_dns_name} ${nfs_port}; do
+  sleep 5
+done
+
+while ! sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${efs_dns_name}:/ /nfs; do
+  sleep 5
+done
+
 set +x
-sudo grep 'kubeadm join' /var/log/user-data.log > /nfs/kubeadm.sh
-sudo grep -- '--discovery-token-ca-cert-hash' /var/log/user-data.log >> /nfs/kubeadm.sh
+sudo grep 'kubeadm join' /var/log/user-data.log | tail -n 1 > /nfs/worker.sh
+sudo grep -- '--discovery-token-ca-cert-hash' /var/log/user-data.log | tail -n 1 >> /nfs/worker.sh
 set -x
-sudo chmod 755 /nfs/kubeadm.sh
-sudo echo '/nfs 192.168.0.0/16(rw,sync,no_root_squash,no_subtree_check)' >> /etc/exports
-sudo exportfs -a
+sudo chmod 755 /nfs/worker.sh
+
+echo 'Done'

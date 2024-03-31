@@ -1,4 +1,4 @@
-#output "kubernetes_master_ip" {
-#  value       = aws_instance.kubernetes_master.private_ip
-#  description = "kubernetes master private ip"
-#}
+output "kubernetes_api_internal" {
+  value       = aws_lb.api_internal.dns_name
+  description = "Kubernetes api internal"
+}

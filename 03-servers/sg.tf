@@ -72,6 +72,22 @@ resource "aws_security_group" "kubernetes_master" {
   }
 }
 
+resource "aws_security_group" "efs" {
+  name   = "sg_efs"
+  vpc_id = data.terraform_remote_state.network.outputs.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = local.anywhere
+  }
+
+  tags = {
+    Name = "efs_sg"
+  }
+}
+
 resource "aws_security_group_rule" "master_ingress_bastion" {
   type                     = "ingress"
   from_port                = local.ssh_port
@@ -212,6 +228,24 @@ resource "aws_security_group_rule" "worker_from_lb_https" {
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.lb_web.id
   security_group_id        = aws_security_group.kubernetes_worker.id
+}
+
+resource "aws_security_group_rule" "efs_from_master" {
+  type                     = "ingress"
+  from_port                = local.nfs_port
+  to_port                  = local.nfs_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.kubernetes_master.id
+  security_group_id        = aws_security_group.efs.id
+}
+
+resource "aws_security_group_rule" "efs_from_worker" {
+  type                     = "ingress"
+  from_port                = local.nfs_port
+  to_port                  = local.nfs_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.kubernetes_worker.id
+  security_group_id        = aws_security_group.efs.id
 }
 
 resource "aws_security_group" "lb_api" {

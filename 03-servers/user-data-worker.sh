@@ -11,7 +11,8 @@ sudo apt-get install -y \
   curl \
   gnupg \
   ncat \
-  nvme-cli
+  nvme-cli \
+  nfs-common
 
 cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
 overlay
@@ -97,15 +98,19 @@ sudo tune2fs -L "longhorn" $longhorn_disk
 sudo echo 'LABEL=longhorn    /var/lib/longhorn    ext4    defaults    0 0' >> /etc/fstab
 sudo mount /var/lib/longhorn
 
-sudo apt-get install -y nfs-common
+sudo mkdir /nfs
 
-#while ! nc -w1 $kube_master_ip ${nfs_port}; do
-#  sleep 5
-#done
-#
-#while ! sudo mount -t nfs $kube_master_ip:/nfs /mnt; do
-#  sleep 5
-#done
-#
-#sudo /mnt/kubeadm.sh
-#sudo umount /mnt
+while ! nc -w1 ${efs_dns_name} ${nfs_port}; do
+  sleep 5
+done
+
+while ! sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${efs_dns_name}:/ /nfs; do
+  sleep 5
+done
+
+while [ ! -f /nfs/worker.sh ]; do
+  sleep 5
+done
+
+sudo /nfs/worker.sh
+sudo umount /nfs

@@ -47,8 +47,8 @@ resource "aws_launch_configuration" "bastion" {
   name                        = "bastion"
   image_id                    = data.aws_ami.amazonlinux.id
   user_data                   = templatefile("${path.module}/user-data-bastion.sh",
-                                            { eip_bastion_id = aws_eip.bastion.id,
-                                              region         = var.region })
+                                             { eip_bastion_id = aws_eip.bastion.id,
+                                               region         = var.region })
   instance_type               = var.instance_type_bastion
   spot_price                  = local.bastion_price
   key_name                    = aws_key_pair.deployer.key_name
@@ -79,12 +79,16 @@ resource "aws_launch_configuration" "kubernetes_master" {
   name            = "Kubernetes master"
   image_id        = data.aws_ami.linux.id
   user_data       = templatefile("user-data-master.sh",
-                                 { linux_user       = local.linux_user,
-                                   archi            = local.archi,
-                                   kube_vers        = local.kube_vers,
-                                   helm_vers        = local.helm_vers,
-                                   containerd_vers  = local.containerd_vers,
-                                   runc_vers        = local.runc_vers })
+                                 { linux_user        = local.linux_user,
+                                   archi             = local.archi,
+                                   kube_vers         = local.kube_vers,
+                                   helm_vers         = local.helm_vers,
+                                   containerd_vers   = local.containerd_vers,
+                                   runc_vers         = local.runc_vers,
+                                   nfs_port          = local.nfs_port,
+                                   efs_dns_name      = aws_efs_file_system.efs.dns_name,
+                                   kube_api_internet = aws_lb.api.dns_name,
+                                   kube_api_internal = aws_lb.api_internal.dns_name })
   instance_type   = var.instance_type_master
   spot_price      = local.master_price
   key_name        = aws_key_pair.deployer.key_name
@@ -140,7 +144,8 @@ resource "aws_launch_configuration" "kubernetes_worker" {
                                    kube_vers       = local.kube_vers,
                                    containerd_vers = local.containerd_vers,
                                    runc_vers       = local.runc_vers,
-                                   nfs_port        = local.nfs_port })
+                                   nfs_port        = local.nfs_port,
+                                   efs_dns_name    = aws_efs_file_system.efs.dns_name })
   instance_type   = var.instance_type_worker
   spot_price      = local.worker_price
   key_name        = aws_key_pair.deployer.key_name
@@ -177,8 +182,3 @@ resource "aws_autoscaling_group" "kubernetes_worker" {
     propagate_at_launch = true
   }
 }
-
-#resource "aws_eip" "kubernetes_master" {
-#  instance = aws_instance.kubernetes_master.id
-#  domain   = "vpc"
-#}
