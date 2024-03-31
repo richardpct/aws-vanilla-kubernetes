@@ -101,15 +101,15 @@ sudo mount /var/lib/longhorn
 sudo mkdir /nfs
 
 while ! nc -w1 ${efs_dns_name} ${nfs_port}; do
-  sleep 5
+  sleep 10
 done
 
 while ! sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${efs_dns_name}:/ /nfs; do
-  sleep 5
+  sleep 10
 done
 
 while [ ! -f /nfs/worker.sh ]; do
-  sleep 5
+  sleep 10
 done
 
 sudo /nfs/worker.sh

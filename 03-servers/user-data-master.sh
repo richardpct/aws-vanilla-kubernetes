@@ -112,6 +112,8 @@ while ! sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo
   sleep 5
 done
 
+sudo install -m 644 /etc/kubernetes/admin.conf /nfs/config
+
 set +x
 sudo grep 'kubeadm join' /var/log/user-data.log | tail -n 1 > /nfs/worker.sh
 sudo grep -- '--discovery-token-ca-cert-hash' /var/log/user-data.log | tail -n 1 >> /nfs/worker.sh

@@ -48,6 +48,8 @@ resource "aws_launch_configuration" "bastion" {
   image_id                    = data.aws_ami.amazonlinux.id
   user_data                   = templatefile("${path.module}/user-data-bastion.sh",
                                              { eip_bastion_id = aws_eip.bastion.id,
+                                               efs_dns_name   = aws_efs_file_system.efs.dns_name,
+                                               nfs_port       = local.nfs_port,
                                                region         = var.region })
   instance_type               = var.instance_type_bastion
   spot_price                  = local.bastion_price
@@ -114,18 +116,19 @@ resource "aws_autoscaling_group" "kubernetes_master" {
   }
 }
 
-#resource "null_resource" "get_kube_config" {
-#  provisioner "local-exec" {
-#    command = <<EOF
-#aws ec2 wait instance-status-ok --instance-ids ${data.aws_instance.kubernetes_master.host_id}
-#ssh -o StrictHostKeyChecking=accept-new ${local.linux_user}@${aws_eip.kubernetes_master.public_ip} 'until [ -f .kube/config ]; do sleep 1; done'
-#ssh ${local.linux_user}@${aws_eip.kubernetes_master.public_ip} 'sed -e "s;https://.*:6443;https://${aws_eip.kubernetes_master.public_ip}:6443;" .kube/config' > ~/.kube/config-aws
-#chmod 600 ~/.kube/config-aws
-#    EOF
-#  }
-#
-#  depends_on = [aws_instance.kubernetes_master]
-#}
+resource "null_resource" "get_kube_config" {
+  provisioner "local-exec" {
+    command = <<EOF
+while ! nc -w1 ${aws_eip.bastion.public_ip} ${local.ssh_port}; do sleep 10; done
+ssh -o StrictHostKeyChecking=accept-new ec2-user@${aws_eip.bastion.public_ip} 'until [ -f /nfs/config ]; do sleep 10; done'
+ssh ec2-user@${aws_eip.bastion.public_ip} 'sed -e "s;https://.*:6443;https://${aws_lb.api.dns_name}:6443;" /nfs/config' > ~/.kube/config-aws
+ssh ec2-user@${aws_eip.bastion.public_ip} 'sudo umount /nfs'
+chmod 600 ~/.kube/config-aws
+    EOF
+  }
+
+  depends_on = [aws_autoscaling_group.bastion]
+}
 
 resource "null_resource" "clean_ssh_know_hosts" {
   provisioner "local-exec" {

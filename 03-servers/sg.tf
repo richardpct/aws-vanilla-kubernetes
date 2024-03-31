@@ -230,6 +230,24 @@ resource "aws_security_group_rule" "worker_from_lb_https" {
   security_group_id        = aws_security_group.kubernetes_worker.id
 }
 
+resource "aws_security_group_rule" "bastion_to_efs" {
+  type                     = "egress"
+  from_port                = local.nfs_port
+  to_port                  = local.nfs_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.efs.id
+  security_group_id        = aws_security_group.bastion.id
+}
+
+resource "aws_security_group_rule" "efs_from_bastion" {
+  type                     = "ingress"
+  from_port                = local.nfs_port
+  to_port                  = local.nfs_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.bastion.id
+  security_group_id        = aws_security_group.efs.id
+}
+
 resource "aws_security_group_rule" "efs_from_master" {
   type                     = "ingress"
   from_port                = local.nfs_port

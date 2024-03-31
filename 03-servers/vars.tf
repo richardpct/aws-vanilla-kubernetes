@@ -14,15 +14,15 @@ locals {
   nodeport_http   = 30080
   nodeport_https  = 30443
   anywhere        = ["0.0.0.0/0"]
-  bastion_price   = "0.004"
+  bastion_price   = "0.005"
   bastion_min     = 1
   bastion_max     = 1
-  master_price    = "0.0085"
+  master_price    = "0.009"
   master_min      = 1
   master_max      = 1
   worker_price    = "0.01"
-  worker_min      = 2
-  worker_max      = 2
+  worker_min      = 1
+  worker_max      = 1
   record_dns      = toset(["grafana", "vault", "www2"])
 }
 
