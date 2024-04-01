@@ -114,3 +114,5 @@ done
 
 sudo /nfs/worker.sh
 sudo umount /nfs
+
+echo 'Done'

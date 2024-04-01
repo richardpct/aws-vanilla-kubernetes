@@ -158,6 +158,15 @@ resource "aws_security_group_rule" "master_to_worker" {
   security_group_id        = aws_security_group.kubernetes_worker.id
 }
 
+resource "aws_security_group_rule" "master_to_master" {
+  type                     = "ingress"
+  from_port                = 0
+  to_port                  = 0
+  protocol                 = "-1"
+  source_security_group_id = aws_security_group.kubernetes_master.id
+  security_group_id        = aws_security_group.kubernetes_master.id
+}
+
 resource "aws_security_group_rule" "worker_to_worker" {
   type                     = "ingress"
   from_port                = 0

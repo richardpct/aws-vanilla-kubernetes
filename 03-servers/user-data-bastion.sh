@@ -15,8 +15,4 @@ while ! sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo
   sleep 10
 done
 
-while [ ! -f /nfs/config ]; do
-  sleep 10
-done
-
 echo "DONE"
