@@ -22,5 +22,5 @@ resource "aws_route53_record" "name" {
   }
 
   set_identifier = each.key
-  records        = [aws_lb.web.dns_name]
+  records        = [aws_lb.api.dns_name]
 }

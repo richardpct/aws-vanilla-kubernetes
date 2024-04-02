@@ -50,13 +50,13 @@ variable "instance_type_bastion" {
 variable "instance_type_master" {
   type        = string
   description = "instance type"
-  default     = "t4g.small"
+  default     = "t4g.medium"
 }
 
 variable "instance_type_worker" {
   type        = string
   description = "instance type"
-  default     = "t4g.small"
+  default     = "t4g.medium"
 }
 
 variable "root_size_master" {

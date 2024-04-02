@@ -221,21 +221,12 @@ resource "aws_security_group_rule" "lb_api_internal_from_worker" {
   security_group_id        = aws_security_group.lb_api_internal.id
 }
 
-resource "aws_security_group_rule" "worker_from_lb_http" {
-  type                     = "ingress"
-  from_port                = local.nodeport_http
-  to_port                  = local.nodeport_http
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.lb_web.id
-  security_group_id        = aws_security_group.kubernetes_worker.id
-}
-
 resource "aws_security_group_rule" "worker_from_lb_https" {
   type                     = "ingress"
   from_port                = local.nodeport_https
   to_port                  = local.nodeport_https
   protocol                 = "tcp"
-  source_security_group_id = aws_security_group.lb_web.id
+  source_security_group_id = aws_security_group.lb_api.id
   security_group_id        = aws_security_group.kubernetes_worker.id
 }
 
@@ -286,6 +277,13 @@ resource "aws_security_group" "lb_api" {
     cidr_blocks = [var.my_ip_address]
   }
 
+  ingress {
+    from_port   = local.https_port
+    to_port     = local.https_port
+    protocol    = "tcp"
+    cidr_blocks = [var.my_ip_address]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -311,42 +309,5 @@ resource "aws_security_group" "lb_api_internal" {
 
   tags = {
     Name = "lb_api_sg_internal"
-  }
-}
-
-resource "aws_security_group" "lb_web" {
-  name   = "sg_lb_web"
-  vpc_id = data.terraform_remote_state.network.outputs.vpc_id
-
-  ingress {
-    from_port   = local.https_port
-    to_port     = local.https_port
-    protocol    = "tcp"
-    cidr_blocks = [var.my_ip_address]
-  }
-
-  ingress {
-    from_port   = local.http_port
-    to_port     = local.http_port
-    protocol    = "tcp"
-    cidr_blocks = [var.my_ip_address]
-  }
-
-  ingress {
-    from_port   = local.https_port
-    to_port     = local.https_port
-    protocol    = "tcp"
-    cidr_blocks = [for nat_ip in data.terraform_remote_state.network.outputs.aws_eip_nat_ip : "${nat_ip}/32"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = local.anywhere
-  }
-
-  tags = {
-    Name = "lb_web_sg"
   }
 }

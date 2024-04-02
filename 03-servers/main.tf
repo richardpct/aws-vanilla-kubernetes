@@ -175,7 +175,7 @@ resource "aws_autoscaling_group" "kubernetes_worker" {
   name                 = "Kubernetes worker"
   launch_configuration = aws_launch_configuration.kubernetes_worker.name
   vpc_zone_identifier  = data.terraform_remote_state.network.outputs.subnet_private[*]
-  target_group_arns    = [aws_lb_target_group.http.arn, aws_lb_target_group.https.arn]
+  target_group_arns    = [aws_lb_target_group.https.arn]
   min_size             = local.worker_min
   max_size             = local.worker_max
 
