@@ -1,8 +1,8 @@
-resource "aws_lb" "api" {
-  name               = "lb-api"
+resource "aws_lb" "internet" {
+  name               = "lb-internet"
   internal           = false
   load_balancer_type = "network"
-  security_groups    = [aws_security_group.lb_api.id]
+  security_groups    = [aws_security_group.lb_internet.id]
   subnets            = data.terraform_remote_state.network.outputs.subnet_public[*]
 }
 
@@ -14,7 +14,7 @@ resource "aws_lb_target_group" "api" {
 }
 
 resource "aws_lb_listener" "api" {
-  load_balancer_arn = aws_lb.api.arn
+  load_balancer_arn = aws_lb.internet.arn
   port              = local.kube_api_port
   protocol          = "TCP"
 
@@ -32,7 +32,7 @@ resource "aws_lb_target_group" "https" {
 }
 
 resource "aws_lb_listener" "https" {
-  load_balancer_arn = aws_lb.api.arn
+  load_balancer_arn = aws_lb.internet.arn
   port              = local.https_port
   protocol          = "TCP"
 

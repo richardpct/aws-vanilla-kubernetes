@@ -89,7 +89,7 @@ resource "aws_launch_configuration" "kubernetes_master" {
                                    runc_vers         = local.runc_vers,
                                    nfs_port          = local.nfs_port,
                                    efs_dns_name      = aws_efs_file_system.efs.dns_name,
-                                   kube_api_internet = aws_lb.api.dns_name,
+                                   kube_api_internet = aws_lb.internet.dns_name,
                                    kube_api_internal = aws_lb.api_internal.dns_name })
   instance_type   = var.instance_type_master
   spot_price      = local.master_price
@@ -121,7 +121,7 @@ resource "null_resource" "get_kube_config" {
     command = <<EOF
 while ! nc -w1 ${aws_eip.bastion.public_ip} ${local.ssh_port}; do sleep 10; done
 ssh -o StrictHostKeyChecking=accept-new ec2-user@${aws_eip.bastion.public_ip} 'until [ -f /nfs/config ]; do sleep 10; done'
-ssh ec2-user@${aws_eip.bastion.public_ip} 'sed -e "s;https://.*:6443;https://${aws_lb.api.dns_name}:6443;" /nfs/config' > ~/.kube/config-aws
+ssh ec2-user@${aws_eip.bastion.public_ip} 'sed -e "s;https://.*:6443;https://${aws_lb.internet.dns_name}:6443;" /nfs/config' > ~/.kube/config-aws
 ssh ec2-user@${aws_eip.bastion.public_ip} 'sudo umount /nfs'
 chmod 600 ~/.kube/config-aws
     EOF
