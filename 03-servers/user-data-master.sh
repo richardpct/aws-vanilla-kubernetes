@@ -82,10 +82,6 @@ sudo apt-get update -y
 sudo apt-get install -y kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 
-sudo curl -O https://get.helm.sh/helm-v${helm_vers}-linux-${archi}.tar.gz
-sudo tar zxf helm-v${helm_vers}-linux-${archi}.tar.gz
-sudo cp linux-${archi}/helm /usr/local/bin/
-
 sudo mkdir /nfs
 
 while ! nc -w1 ${efs_dns_name} ${nfs_port}; do

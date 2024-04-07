@@ -84,7 +84,6 @@ resource "aws_launch_configuration" "kubernetes_master" {
                                  { linux_user        = local.linux_user,
                                    archi             = local.archi,
                                    kube_vers         = local.kube_vers,
-                                   helm_vers         = local.helm_vers,
                                    containerd_vers   = local.containerd_vers,
                                    runc_vers         = local.runc_vers,
                                    nfs_port          = local.nfs_port,

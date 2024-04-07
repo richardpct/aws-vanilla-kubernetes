@@ -2,8 +2,7 @@ locals {
   linux_user      = "ubuntu"
   archi           = "arm64" // amd64 or arm64
   kube_vers       = "1.29"
-  helm_vers       = "3.14.0"
-  containerd_vers = "1.7.13"
+  containerd_vers = "1.7.15"
   runc_vers       = "1.1.12"
   ssh_port        = 22
   http_port       = 80
