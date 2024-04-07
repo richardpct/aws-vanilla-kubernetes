@@ -1,8 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e -x
 
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
+NUM=`echo $(hostname) | awk -F '-' '{print $4}'`
+NODENAME=control-plane-$NUM
+hostnamectl set-hostname $NODENAME
 
 sudo apt-get update -y
 sudo apt-get upgrade -y
@@ -100,13 +104,10 @@ if [ ! -f /nfs/first ]; then
 fi
 
 if [[ $CONTROL_PLANE == 'first' ]]; then
-  NODENAME=$(hostname -s)
-
   sudo kubeadm init \
     --control-plane-endpoint "${kube_api_internal}:6443" \
     --skip-phases=addon/kube-proxy \
     --apiserver-cert-extra-sans=${kube_api_internet},${kube_api_internal} \
-    --node-name $NODENAME \
     --upload-certs
 else
   while [ ! -f /nfs/master.sh ]; do sleep 5; done

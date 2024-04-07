@@ -1,8 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e -x
 
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
+NUM=`echo $(hostname) | awk -F '-' '{print $4}'`
+NODENAME=worker-$NUM
+hostnamectl set-hostname $NODENAME
+
 sudo apt-get update
 sudo apt-get upgrade -y
 sudo apt-get install -y \
