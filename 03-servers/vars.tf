@@ -1,5 +1,6 @@
 locals {
-  linux_user      = "ubuntu"
+  distribution    = "amazonlinux" // amazonlinux or ubuntu
+  linux_user      = "ec2-user"
   archi           = "arm64" // amd64 or arm64
   kube_vers       = "1.29"
   containerd_vers = "1.7.15"

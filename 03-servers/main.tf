@@ -19,7 +19,7 @@ data "aws_ami" "amazonlinux" {
   owners = ["137112412989"] # Amazon
 }
 
-data "aws_ami" "linux" {
+data "aws_ami" "ubuntu" {
   most_recent = true
 
   filter {
@@ -79,14 +79,15 @@ resource "aws_autoscaling_group" "bastion" {
 
 resource "aws_launch_configuration" "kubernetes_master" {
   name            = "Kubernetes master"
-  image_id        = data.aws_ami.linux.id
-  user_data       = templatefile("user-data-master.sh",
+  image_id        = data.aws_ami.amazonlinux.id
+  user_data       = templatefile("${local.distribution}/user-data-master.sh",
                                  { linux_user        = local.linux_user,
                                    archi             = local.archi,
                                    kube_vers         = local.kube_vers,
                                    containerd_vers   = local.containerd_vers,
                                    runc_vers         = local.runc_vers,
                                    nfs_port          = local.nfs_port,
+                                   worker_nb         = local.worker_min,
                                    efs_dns_name      = aws_efs_file_system.efs.dns_name,
                                    kube_api_internet = aws_lb.internet.dns_name,
                                    kube_api_internal = aws_lb.api_internal.dns_name })
@@ -140,8 +141,8 @@ sed -i -e "/bastion.${var.my_domain}/d" ~/.ssh/known_hosts
 
 resource "aws_launch_configuration" "kubernetes_worker" {
   name            = "Kubernetes worker"
-  image_id        = data.aws_ami.linux.id
-  user_data       = templatefile("user-data-worker.sh",
+  image_id        = data.aws_ami.amazonlinux.id
+  user_data       = templatefile("${local.distribution}/user-data-worker.sh",
                                  { archi           = local.archi,
                                    kube_vers       = local.kube_vers,
                                    containerd_vers = local.containerd_vers,
