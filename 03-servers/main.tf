@@ -19,12 +19,12 @@ data "aws_ami" "amazonlinux" {
   owners = ["137112412989"] # Amazon
 }
 
-data "aws_ami" "ubuntu" {
+data "aws_ami" "linux" {
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-${local.archi}-server-*"]
+    values = [local.distribution == "ubuntu" ? "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-${local.archi}-server-*" : "al2023-ami-*-kernel-*-arm64"]
   }
 
   filter {
@@ -32,7 +32,7 @@ data "aws_ami" "ubuntu" {
     values = ["hvm"]
   }
 
-  owners = ["099720109477"] # Canonical
+  owners = [local.distribution == "ubuntu" ? "099720109477" : "137112412989"]
 }
 
 resource "aws_eip" "bastion" {
@@ -79,7 +79,7 @@ resource "aws_autoscaling_group" "bastion" {
 
 resource "aws_launch_configuration" "kubernetes_master" {
   name            = "Kubernetes master"
-  image_id        = data.aws_ami.amazonlinux.id
+  image_id        = data.aws_ami.linux.id
   user_data       = templatefile("${local.distribution}/user-data-master.sh",
                                  { linux_user        = local.linux_user,
                                    archi             = local.archi,
@@ -141,7 +141,7 @@ sed -i -e "/bastion.${var.my_domain}/d" ~/.ssh/known_hosts
 
 resource "aws_launch_configuration" "kubernetes_worker" {
   name            = "Kubernetes worker"
-  image_id        = data.aws_ami.amazonlinux.id
+  image_id        = data.aws_ami.linux.id
   user_data       = templatefile("${local.distribution}/user-data-worker.sh",
                                  { archi           = local.archi,
                                    kube_vers       = local.kube_vers,
