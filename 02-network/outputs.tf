@@ -8,11 +8,6 @@ output "subnet_public" {
   description = "Subnet public"
 }
 
-output "subnet_private_lb" {
-  value       = aws_subnet.private_lb[*].id
-  description = "Subnet private lb"
-}
-
 output "subnet_private" {
   value       = aws_subnet.private[*].id
   description = "Subnet private"

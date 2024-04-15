@@ -41,28 +41,6 @@ resource "aws_subnet" "public" {
   }
 }
 
-resource "aws_subnet" "public_nat" {
-  count             = length(var.subnet_public_nat)
-  vpc_id            = aws_vpc.my_vpc.id
-  cidr_block        = var.subnet_public_nat[count.index]
-  availability_zone = data.aws_availability_zones.available.names[count.index]
-
-  tags = {
-    Name = "subnet_public_nat_${count.index}"
-  }
-}
-
-resource "aws_subnet" "private_lb" {
-  count             = length(var.subnet_private_lb)
-  vpc_id            = aws_vpc.my_vpc.id
-  cidr_block        = var.subnet_private_lb[count.index]
-  availability_zone = data.aws_availability_zones.available.names[count.index]
-
-  tags = {
-    Name = "subnet_private_lb_${count.index}"
-  }
-}
-
 resource "aws_subnet" "private" {
   count             = length(var.subnet_private)
   vpc_id            = aws_vpc.my_vpc.id
@@ -75,7 +53,7 @@ resource "aws_subnet" "private" {
 }
 
 resource "aws_eip" "nat" {
-  count  = length(var.subnet_public_nat)
+  count  = length(var.subnet_public)
   domain = "vpc"
 
   tags = {
@@ -84,9 +62,9 @@ resource "aws_eip" "nat" {
 }
 
 resource "aws_nat_gateway" "nat_gw" {
-  count         = length(var.subnet_public_nat)
+  count         = length(var.subnet_public)
   allocation_id = aws_eip.nat[count.index].id
-  subnet_id     = aws_subnet.public_nat[count.index].id
+  subnet_id     = aws_subnet.public[count.index].id
 
   tags = {
     Name = "nat_gw_${count.index}"
@@ -107,7 +85,7 @@ resource "aws_route_table" "route" {
 }
 
 resource "aws_route_table" "route_nat" {
-  count  = length(var.subnet_public_nat)
+  count  = length(var.subnet_public)
   vpc_id = aws_vpc.my_vpc.id
 
   route {
@@ -123,12 +101,6 @@ resource "aws_route_table" "route_nat" {
 resource "aws_route_table_association" "public" {
   count          = length(var.subnet_public)
   subnet_id      = aws_subnet.public[count.index].id
-  route_table_id = aws_route_table.route.id
-}
-
-resource "aws_route_table_association" "public_nat" {
-  count          = length(var.subnet_public_nat)
-  subnet_id      = aws_subnet.public_nat[count.index].id
   route_table_id = aws_route_table.route.id
 }
 
