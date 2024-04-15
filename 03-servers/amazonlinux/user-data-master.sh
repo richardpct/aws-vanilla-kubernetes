@@ -4,46 +4,40 @@ set -e -x
 
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
+cd /root
+
 NUM=`echo $(hostname) | awk -F '-' '{print $4}'`
 NODENAME=control-plane-$NUM
 hostnamectl set-hostname $NODENAME
 
-sudo setenforce 0
-sudo sed -i 's/^SELINUX=.*/SELINUX=disabled/' /etc/selinux/config
+setenforce 0
+sed -i 's/^SELINUX=.*/SELINUX=disabled/' /etc/selinux/config
 
-sudo dnf install -y \
+dnf install -y \
   nfsv4-client-utils \
   iscsi-initiator-utils
 
-#sudo install -y \
-#  apt-transport-https \
-#  ca-certificates \
-#  curl \
-#  gnupg \
-#  etcd-client \
-#  nfs-common
-
-cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+cat <<EOF | tee /etc/modules-load.d/k8s.conf
 overlay
 br_netfilter
 EOF
 
-sudo modprobe overlay
-sudo modprobe br_netfilter
+modprobe overlay
+modprobe br_netfilter
 
-cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+cat <<EOF | tee /etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-iptables  = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 net.ipv4.ip_forward                 = 1
 EOF
 
-sudo sysctl --system
+sysctl --system
 
 curl -L -O https://github.com/containerd/containerd/releases/download/v${containerd_vers}/containerd-${containerd_vers}-linux-${archi}.tar.gz
-sudo tar Cxzvf /usr/local containerd-${containerd_vers}-linux-${archi}.tar.gz
+tar Cxzvf /usr/local containerd-${containerd_vers}-linux-${archi}.tar.gz
 rm containerd-${containerd_vers}-linux-${archi}.tar.gz
 
-cat <<EOF | sudo tee /lib/systemd/system/containerd.service
+cat <<EOF | tee /lib/systemd/system/containerd.service
 [Unit]
 Description=containerd container runtime
 Documentation=https://containerd.io
@@ -69,19 +63,19 @@ OOMScoreAdjust=-999
 WantedBy=multi-user.target
 EOF
 
-sudo mkdir /etc/containerd
-sudo containerd config default > /etc/containerd/config.toml
-sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+mkdir /etc/containerd
+containerd config default > /etc/containerd/config.toml
+sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
 
 curl -L -O https://github.com/opencontainers/runc/releases/download/v${runc_vers}/runc.${archi}
-sudo install -m 755 runc.${archi} /usr/local/sbin/runc
+install -m 755 runc.${archi} /usr/local/sbin/runc
 rm runc.${archi}
 
-sudo systemctl daemon-reload
-sudo systemctl start containerd
-sudo systemctl enable containerd
+systemctl daemon-reload
+systemctl start containerd
+systemctl enable containerd
 
-cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+cat <<EOF | tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
 baseurl=https://pkgs.k8s.io/core:/stable:/v${kube_vers}/rpm/
@@ -91,13 +85,13 @@ gpgkey=https://pkgs.k8s.io/core:/stable:/v${kube_vers}/rpm/repodata/repomd.xml.k
 exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
 EOF
 
-sudo dnf update
-sudo dnf install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
-sudo systemctl enable kubelet
+dnf update
+dnf install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+systemctl enable kubelet
 
-sudo mkdir /nfs
+mkdir /nfs
 
-while ! sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${efs_dns_name}:/ /nfs; do
+while ! mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${efs_dns_name}:/ /nfs; do
   sleep 10
 done
 
@@ -109,7 +103,7 @@ if [ ! -f /nfs/first ]; then
 fi
 
 if [[ $CONTROL_PLANE == 'first' ]]; then
-  sudo kubeadm init \
+  kubeadm init \
     --control-plane-endpoint "${kube_api_internal}:6443" \
     --skip-phases=addon/kube-proxy \
     --apiserver-cert-extra-sans=${kube_api_internet},${kube_api_internal} \
@@ -119,29 +113,30 @@ else
   /nfs/master.sh
 fi
 
-sudo mkdir /root/.kube
-sudo cp /etc/kubernetes/admin.conf /root/.kube/config
+mkdir /root/.kube
+cp /etc/kubernetes/admin.conf /root/.kube/config
 mkdir /home/${linux_user}/.kube
-sudo install -m 644 -o ${linux_user} -g ${linux_user} /etc/kubernetes/admin.conf /home/${linux_user}/.kube/
+chown ${linux_user}:${linux_user} .kube
+install -m 644 -o ${linux_user} -g ${linux_user} /etc/kubernetes/admin.conf /home/${linux_user}/.kube/
 mv /home/${linux_user}/.kube/admin.conf /home/${linux_user}/.kube/config
 echo 'alias k=kubectl' >> /root/.bashrc
 
 if [[ $CONTROL_PLANE == 'first' ]]; then
-  sudo install -m 644 /etc/kubernetes/admin.conf /nfs/config
+  install -m 644 /etc/kubernetes/admin.conf /nfs/config
 
   set +x
-  sudo grep 'kubeadm join' /var/log/user-data.log | head -n 1 > /nfs/master.sh
-  sudo grep -- '--discovery-token-ca-cert-hash' /var/log/user-data.log | head -n 1 >> /nfs/master.sh
-  sudo grep -- '--control-plane --certificate-key' /var/log/user-data.log | head -n 1 >> /nfs/master.sh
+  grep 'kubeadm join' /var/log/user-data.log | head -n 1 > /nfs/master.sh
+  grep -- '--discovery-token-ca-cert-hash' /var/log/user-data.log | head -n 1 >> /nfs/master.sh
+  grep -- '--control-plane --certificate-key' /var/log/user-data.log | head -n 1 >> /nfs/master.sh
 
-  sudo grep 'kubeadm join' /var/log/user-data.log | tail -n 1 > /nfs/worker.sh
-  sudo grep -- '--discovery-token-ca-cert-hash' /var/log/user-data.log | tail -n 1 >> /nfs/worker.sh
+  grep 'kubeadm join' /var/log/user-data.log | tail -n 1 > /nfs/worker.sh
+  grep -- '--discovery-token-ca-cert-hash' /var/log/user-data.log | tail -n 1 >> /nfs/worker.sh
   set -x
-  sudo chmod 755 /nfs/worker.sh
+  chmod 755 /nfs/worker.sh
 fi
 
 while [ $(find /nfs -type f -name 'worker-*' | wc -l) != ${worker_nb} ]; do sleep 5; done
 
 echo 'Done'
 
-sudo shutdown -r now
+shutdown -r now
