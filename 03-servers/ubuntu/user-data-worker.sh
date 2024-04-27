@@ -21,7 +21,8 @@ apt-get install -y \
   nvme-cli \
   nfs-common \
   netcat-openbsd \
-  open-iscsi
+  open-iscsi \
+  vim
 
 cat <<EOF | tee /etc/modules-load.d/k8s.conf
 overlay

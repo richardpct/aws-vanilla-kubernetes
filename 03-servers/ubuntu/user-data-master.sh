@@ -20,7 +20,8 @@ apt-get install -y \
   etcd-client \
   nfs-common \
   netcat-openbsd \
-  open-iscsi
+  open-iscsi \
+  vim
 
 cat <<EOF | tee /etc/modules-load.d/k8s.conf
 overlay
