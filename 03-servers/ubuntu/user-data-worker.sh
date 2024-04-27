@@ -19,7 +19,9 @@ apt-get install -y \
   gnupg \
   ncat \
   nvme-cli \
-  nfs-common
+  nfs-common \
+  netcat-openbsd \
+  open-iscsi
 
 cat <<EOF | tee /etc/modules-load.d/k8s.conf
 overlay

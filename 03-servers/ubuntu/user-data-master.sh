@@ -18,7 +18,9 @@ apt-get install -y \
   curl \
   gnupg \
   etcd-client \
-  nfs-common
+  nfs-common \
+  netcat-openbsd \
+  open-iscsi
 
 cat <<EOF | tee /etc/modules-load.d/k8s.conf
 overlay
