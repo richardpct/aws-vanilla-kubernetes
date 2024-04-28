@@ -45,12 +45,13 @@ resource "aws_eip" "bastion" {
 
 resource "aws_launch_configuration" "bastion" {
   name                        = "bastion"
-  image_id                    = data.aws_ami.amazonlinux.id
-  user_data                   = templatefile("${path.module}/user-data-bastion.sh",
+  image_id                    = data.aws_ami.linux.id
+  user_data                   = templatefile("${local.distribution}/user-data-bastion.sh",
                                              { eip_bastion_id = aws_eip.bastion.id,
                                                efs_dns_name   = aws_efs_file_system.efs.dns_name,
                                                nfs_port       = local.nfs_port,
-                                               region         = var.region })
+                                               region         = var.region,
+                                               archi          = local.archi })
   instance_type               = var.instance_type_bastion
   spot_price                  = local.bastion_price
   key_name                    = aws_key_pair.deployer.key_name
@@ -120,9 +121,9 @@ resource "null_resource" "get_kube_config" {
   provisioner "local-exec" {
     command = <<EOF
 while ! nc -w1 ${aws_eip.bastion.public_ip} ${local.ssh_port}; do sleep 10; done
-ssh -o StrictHostKeyChecking=accept-new ec2-user@${aws_eip.bastion.public_ip} 'until [ -f /nfs/config ]; do sleep 10; done'
-ssh ec2-user@${aws_eip.bastion.public_ip} 'sed -e "s;https://.*:6443;https://${aws_lb.internet.dns_name}:6443;" /nfs/config' > ~/.kube/config-aws
-ssh ec2-user@${aws_eip.bastion.public_ip} 'sudo umount /nfs'
+ssh -o StrictHostKeyChecking=accept-new ${local.linux_user}@${aws_eip.bastion.public_ip} 'until [ -f /nfs/config ]; do sleep 10; done'
+ssh ${local.linux_user}@${aws_eip.bastion.public_ip} 'sed -e "s;https://.*:6443;https://${aws_lb.internet.dns_name}:6443;" /nfs/config' > ~/.kube/config-aws
+ssh ${local.linux_user}@${aws_eip.bastion.public_ip} 'sudo umount /nfs'
 chmod 600 ~/.kube/config-aws
     EOF
   }
