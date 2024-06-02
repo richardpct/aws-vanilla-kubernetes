@@ -22,7 +22,8 @@ apt-get install -y \
   nfs-common \
   netcat-openbsd \
   open-iscsi \
-  vim
+  vim \
+  less
 
 cat <<EOF | tee /etc/modules-load.d/k8s.conf
 overlay
