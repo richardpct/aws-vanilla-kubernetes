@@ -4,6 +4,45 @@ set -e -x
 
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
+function encrypt_etcd() {
+  local encrypt_key=$(head -c 32 /dev/urandom | base64)
+  mkdir -p /etc/kubernetes/enc
+
+  cat > /etc/kubernetes/enc/enc.yaml <<EOF
+apiVersion: apiserver.config.k8s.io/v1
+kind: EncryptionConfiguration
+resources:
+  - resources:
+      - secrets
+    providers:
+      - aescbc:
+          keys:
+            - name: key1
+              secret: $encrypt_key
+      - identity: {}
+EOF
+
+  sed -i '/- --advertise-address/ i \ \ \ \ - --encryption-provider-config=/etc/kubernetes/enc/enc.yaml' /etc/kubernetes/manifests/kube-apiserver.yaml
+  sed -i '/hostNetwork: true/ i \ \ \ \ - name: enc\n      mountPath: /etc/kubernetes/enc\n      readOnly: true' /etc/kubernetes/manifests/kube-apiserver.yaml
+  sed -i '/status: {}/ i \ \ - name: enc\n    hostPath:\n      path: /etc/kubernetes/enc\n      type: DirectoryOrCreate' /etc/kubernetes/manifests/kube-apiserver.yaml
+}
+
+function audit() {
+  mkdir -p /etc/kubernetes/audit
+  mkdir -p /var/log/audit
+
+  cat > /etc/kubernetes/audit/audit-policy.yaml <<EOF
+apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+- level: Metadata
+EOF
+
+  sed -i '/- --advertise-address/ i \ \ \ \ - --audit-policy-file=/etc/kubernetes/audit/audit-policy.yaml\n    - --audit-log-path=/var/log/audit/audit.log' /etc/kubernetes/manifests/kube-apiserver.yaml
+  sed -i '/hostNetwork: true/ i \ \ \ \ - mountPath: /etc/kubernetes/audit/audit-policy.yaml\n      name: audit\n      readOnly: true\n    - mountPath: /var/log/audit/\n      name: audit-log\n      readOnly: false' /etc/kubernetes/manifests/kube-apiserver.yaml
+  sed -i '/status: {}/ i \ \ - name: audit\n    hostPath:\n      path: /etc/kubernetes/audit/audit-policy.yaml\n      type: File\n  - name: audit-log\n    hostPath:\n      path: /var/log/audit/\n      type: DirectoryOrCreate' /etc/kubernetes/manifests/kube-apiserver.yaml
+}
+
 cd /root
 
 NUM=`echo $(hostname) | awk -F '-' '{print $4}'`
@@ -23,7 +62,8 @@ apt-get install -y \
   open-iscsi \
   vim \
   less \
-  bash-completion
+  bash-completion \
+  bsdmainutils
 
 cat <<EOF | tee /etc/modules-load.d/k8s.conf
 overlay
@@ -144,4 +184,6 @@ if [[ $CONTROL_PLANE == 'first' ]]; then
   chmod 755 /nfs/worker.sh
 fi
 
+audit
+#encrypt_etcd
 echo 'Done'
