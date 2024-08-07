@@ -5,6 +5,7 @@ locals {
   kube_vers       = "1.30"
   containerd_vers = "1.7.15"
   runc_vers       = "1.1.12"
+  kube_bench_vers = "0.8.0"
   ssh_port        = 22
   http_port       = 80
   https_port      = 443

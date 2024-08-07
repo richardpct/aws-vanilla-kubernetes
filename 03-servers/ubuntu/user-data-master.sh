@@ -38,9 +38,23 @@ rules:
 - level: Metadata
 EOF
 
-  sed -i '/- --advertise-address/ i \ \ \ \ - --audit-policy-file=/etc/kubernetes/audit/audit-policy.yaml\n    - --audit-log-path=/var/log/audit/audit.log' /etc/kubernetes/manifests/kube-apiserver.yaml
+  sed -i '/- --advertise-address/ i \ \ \ \ - --audit-policy-file=/etc/kubernetes/audit/audit-policy.yaml\n    - --audit-log-path=/var/log/audit/audit.log\n    - --audit-log-maxage=30\n    - --audit-log-maxbackup=10\n    - --audit-log-maxsize=100' /etc/kubernetes/manifests/kube-apiserver.yaml
   sed -i '/hostNetwork: true/ i \ \ \ \ - mountPath: /etc/kubernetes/audit/audit-policy.yaml\n      name: audit\n      readOnly: true\n    - mountPath: /var/log/audit/\n      name: audit-log\n      readOnly: false' /etc/kubernetes/manifests/kube-apiserver.yaml
   sed -i '/status: {}/ i \ \ - name: audit\n    hostPath:\n      path: /etc/kubernetes/audit/audit-policy.yaml\n      type: File\n  - name: audit-log\n    hostPath:\n      path: /var/log/audit/\n      type: DirectoryOrCreate' /etc/kubernetes/manifests/kube-apiserver.yaml
+}
+
+function install_kubebench() {
+  curl -L -O https://github.com/aquasecurity/kube-bench/releases/download/v${kube_bench_vers}/kube-bench_${kube_bench_vers}_linux_arm64.deb
+  apt install ./kube-bench_${kube_bench_vers}_linux_arm64.deb -f
+  rm -f ./kube-bench_${kube_bench_vers}_linux_arm64.deb
+}
+
+function enforce_security() {
+  sed -i '/- --advertise-address/ i \ \ \ \ - --profiling=false' /etc/kubernetes/manifests/kube-apiserver.yaml
+  sed -i '/image:/ i \ \ \ \ - --profiling=false' /etc/kubernetes/manifests/kube-controller-manager.yaml
+  sed -i '/image:/ i \ \ \ \ - --profiling=false' /etc/kubernetes/manifests/kube-scheduler.yaml
+  chmod 600 /lib/systemd/system/kubelet.service
+  chmod 600 /var/lib/kubelet/config.yaml
 }
 
 cd /root
@@ -184,6 +198,9 @@ if [[ $CONTROL_PLANE == 'first' ]]; then
   chmod 755 /nfs/worker.sh
 fi
 
-audit
 #encrypt_etcd
+audit
+install_kubebench
+enforce_security
+
 echo 'Done'

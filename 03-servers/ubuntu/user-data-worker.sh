@@ -4,6 +4,12 @@ set -e -x
 
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
+function install_kubebench() {
+  curl -L -O https://github.com/aquasecurity/kube-bench/releases/download/v${kube_bench_vers}/kube-bench_${kube_bench_vers}_linux_arm64.deb
+  apt install ./kube-bench_${kube_bench_vers}_linux_arm64.deb -f
+  rm -f ./kube-bench_${kube_bench_vers}_linux_arm64.deb
+}
+
 cd /root
 
 NUM=`echo $(hostname) | awk -F '-' '{print $4}'`
@@ -125,5 +131,7 @@ done
 
 /nfs/worker.sh
 umount /nfs
+
+install_kubebench
 
 echo 'Done'

@@ -87,6 +87,7 @@ resource "aws_launch_configuration" "kubernetes_master" {
                                    kube_vers         = local.kube_vers,
                                    containerd_vers   = local.containerd_vers,
                                    runc_vers         = local.runc_vers,
+                                   kube_bench_vers   = local.kube_bench_vers,
                                    nfs_port          = local.nfs_port,
                                    worker_nb         = local.worker_min,
                                    efs_dns_name      = aws_efs_file_system.efs.dns_name,
@@ -148,6 +149,7 @@ resource "aws_launch_configuration" "kubernetes_worker" {
                                    kube_vers       = local.kube_vers,
                                    containerd_vers = local.containerd_vers,
                                    runc_vers       = local.runc_vers,
+                                   kube_bench_vers = local.kube_bench_vers,
                                    nfs_port        = local.nfs_port,
                                    efs_dns_name    = aws_efs_file_system.efs.dns_name })
   instance_type   = var.instance_type_worker
