@@ -10,6 +10,36 @@ function install_kubebench() {
   rm -f ./kube-bench_${kube_bench_vers}_linux_arm64.deb
 }
 
+function install_falco() {
+  curl -fsSL https://falco.org/repo/falcosecurity-packages.asc | \
+    gpg --dearmor -o /usr/share/keyrings/falco-archive-keyring.gpg
+  echo "deb [signed-by=/usr/share/keyrings/falco-archive-keyring.gpg] https://download.falco.org/packages/deb stable main" | \
+    tee -a /etc/apt/sources.list.d/falcosecurity.list
+  apt-get update -y
+  apt-get install -y falco
+
+  cat > /etc/falco/falco_rules.local.yaml <<EOF
+- list: suspect_binaries
+  items: [mv, rm, chmod, chown, unlink, ln, touch]
+
+- macro: suspect_procs
+  condition: (proc.name in (suspect_binaries))
+
+- rule: suspects commands
+  desc: >
+    Some commands can be considered suspects
+  condition: >
+    spawned_process
+    and container
+    and suspect_procs
+    and proc.tty != 0
+  output: A suspect command was performed (evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath command=%proc.cmdline %container.info)
+  priority: NOTICE
+EOF
+
+  systemctl restart falco-modern-bpf
+}
+
 cd /root
 
 NUM=`echo $(hostname) | awk -F '-' '{print $4}'`
@@ -133,5 +163,6 @@ done
 umount /nfs
 
 install_kubebench
+install_falco
 
 echo 'Done'
