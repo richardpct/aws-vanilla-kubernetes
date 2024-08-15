@@ -68,6 +68,16 @@ resource "helm_release" "cilium" {
     name  = "hubble.ui.enabled"
     value = "true"
   }
+
+  set {
+    name  = "encryption.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "encryption.type"
+    value = "wireguard"
+  }
 }
 
 resource "helm_release" "metrics_server" {
