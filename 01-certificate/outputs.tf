@@ -16,6 +16,12 @@ output "www2_private_key" {
   sensitive   = true
 }
 
+output "argocd_private_key" {
+  value       = acme_certificate.argocd_certificate.private_key_pem
+  description = "argocd private key"
+  sensitive   = true
+}
+
 output "grafana_certificate" {
   value       = acme_certificate.grafana_certificate.certificate_pem
   description = "Grafana certificate"
@@ -29,4 +35,9 @@ output "vault_certificate" {
 output "www2_certificate" {
   value       = acme_certificate.www2_certificate.certificate_pem
   description = "www2 certificate"
+}
+
+output "argocd_certificate" {
+  value       = acme_certificate.argocd_certificate.certificate_pem
+  description = "argocd certificate"
 }
