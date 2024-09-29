@@ -105,13 +105,13 @@ resource "helm_release" "longhorn" {
   depends_on = [helm_release.cilium]
 }
 
-resource "helm_release" "gatekeeper" {
-  name             = "gatekeeper"
-  repository       = "https://open-policy-agent.github.io/gatekeeper/charts"
-  chart            = "gatekeeper"
-  namespace        = "gatekeeper-system"
-  create_namespace = true
-  force_update     = true
-
-  depends_on = [helm_release.longhorn]
-}
+#resource "helm_release" "gatekeeper" {
+#  name             = "gatekeeper"
+#  repository       = "https://open-policy-agent.github.io/gatekeeper/charts"
+#  chart            = "gatekeeper"
+#  namespace        = "gatekeeper-system"
+#  create_namespace = true
+#  force_update     = true
+#
+#  depends_on = [helm_release.longhorn]
+#}
