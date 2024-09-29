@@ -32,6 +32,12 @@ plan: ## Dry run
 
 .PHONY: destroy
 destroy: ## Destroy the infrastructure
+	ssh-keygen -R $$(kubectl get no control-plane-0 -o json | jq -r '.status.addresses.[0].address')
+	ssh-keygen -R $$(kubectl get no control-plane-1 -o json | jq -r '.status.addresses.[0].address')
+	ssh-keygen -R $$(kubectl get no control-plane-2 -o json | jq -r '.status.addresses.[0].address')
+	ssh-keygen -R $$(kubectl get no worker-0 -o json | jq -r '.status.addresses.[0].address')
+	ssh-keygen -R $$(kubectl get no worker-1 -o json | jq -r '.status.addresses.[0].address')
+	ssh-keygen -R $$(kubectl get no worker-2 -o json | jq -r '.status.addresses.[0].address')
 	tofu destroy
 
 .PHONY: clean
