@@ -22,6 +22,12 @@ output "argocd_private_key" {
   sensitive   = true
 }
 
+output "jfrog_private_key" {
+  value       = acme_certificate.jfrog_certificate.private_key_pem
+  description = "jfrog private key"
+  sensitive   = true
+}
+
 output "grafana_certificate" {
   value       = acme_certificate.grafana_certificate.certificate_pem
   description = "Grafana certificate"
@@ -40,4 +46,9 @@ output "www2_certificate" {
 output "argocd_certificate" {
   value       = acme_certificate.argocd_certificate.certificate_pem
   description = "argocd certificate"
+}
+
+output "jfrog_certificate" {
+  value       = acme_certificate.jfrog_certificate.certificate_pem
+  description = "jfrog certificate"
 }
