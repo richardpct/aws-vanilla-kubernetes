@@ -24,7 +24,7 @@ data "aws_ami" "linux" {
 
   filter {
     name   = "name"
-    values = [local.distribution == "ubuntu" ? "ubuntu-minimal/images/hvm-ssd-gp3/ubuntu-noble-24.04-${local.archi}-minimal-*" : "al2023-ami-*-kernel-*-arm64"]
+    values = [local.distribution == "ubuntu" ? "ubuntu-minimal/images/hvm-ssd-gp3/ubuntu-oracular-24.10-${local.archi}-minimal-*" : "al2023-ami-*-kernel-*-arm64"]
   }
 
   filter {

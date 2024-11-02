@@ -2,9 +2,9 @@ locals {
   distribution    = "ubuntu" // amazonlinux or ubuntu
   linux_user      = local.distribution == "ubuntu" ? "ubuntu" : "ec2-user"
   archi           = "arm64" // amd64 or arm64
-  kube_vers       = "1.30"
-  containerd_vers = "1.7.15"
-  runc_vers       = "1.1.12"
+  kube_vers       = "1.31"
+  containerd_vers = "1.7.23"
+  runc_vers       = "1.2.1"
   kube_bench_vers = "0.8.0"
   ssh_port        = 22
   http_port       = 80
@@ -15,7 +15,7 @@ locals {
   nodeport_http   = 30080
   nodeport_https  = 30443
   anywhere        = ["0.0.0.0/0"]
-  bastion_price   = "0.008"
+  bastion_price   = "0.005"
   bastion_min     = 1
   bastion_max     = 1
   master_price    = "0.008"
@@ -45,7 +45,7 @@ variable "key_network" {
 variable "instance_type_bastion" {
   type        = string
   description = "instance type"
-  default     = "t4g.small"
+  default     = "t4g.micro"
 }
 
 variable "instance_type_master" {

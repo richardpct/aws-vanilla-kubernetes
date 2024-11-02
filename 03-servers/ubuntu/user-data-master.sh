@@ -180,7 +180,7 @@ install -m 644 -o ${linux_user} -g ${linux_user} /etc/kubernetes/admin.conf /hom
 mv /home/${linux_user}/.kube/admin.conf /home/${linux_user}/.kube/config
 echo 'alias k=kubectl' >> /root/.bashrc
 echo 'source /usr/share/bash-completion/bash_completion' >> /root/.bashrc
-mkdir /etc/bash_completion.d
+[ -d /etc/bash_completion.d ] || mkdir /etc/bash_completion.d
 kubectl completion bash | tee /etc/bash_completion.d/kubectl > /dev/null
 echo 'complete -o default -F __start_kubectl k' >> /root/.bashrc
 
