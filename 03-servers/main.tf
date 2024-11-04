@@ -52,7 +52,7 @@ resource "aws_launch_configuration" "bastion" {
                                                nfs_port       = local.nfs_port,
                                                region         = var.region,
                                                archi          = local.archi })
-  instance_type               = var.instance_type_bastion
+  instance_type               = local.instance_type_bastion
   spot_price                  = local.bastion_price
   key_name                    = aws_key_pair.deployer.key_name
   security_groups             = [aws_security_group.bastion.id]
@@ -93,7 +93,7 @@ resource "aws_launch_configuration" "kubernetes_master" {
                                    efs_dns_name      = aws_efs_file_system.efs.dns_name,
                                    kube_api_internet = aws_lb.internet.dns_name,
                                    kube_api_internal = aws_lb.api_internal.dns_name })
-  instance_type   = var.instance_type_master
+  instance_type   = local.instance_type_master
   spot_price      = local.master_price
   key_name        = aws_key_pair.deployer.key_name
   security_groups = [aws_security_group.kubernetes_master.id]
@@ -152,7 +152,7 @@ resource "aws_launch_configuration" "kubernetes_worker" {
                                    kube_bench_vers = local.kube_bench_vers,
                                    nfs_port        = local.nfs_port,
                                    efs_dns_name    = aws_efs_file_system.efs.dns_name })
-  instance_type   = var.instance_type_worker
+  instance_type   = local.instance_type_worker
   spot_price      = local.worker_price
   key_name        = aws_key_pair.deployer.key_name
   security_groups = [aws_security_group.kubernetes_worker.id]

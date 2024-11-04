@@ -44,9 +44,9 @@ EOF
 }
 
 function install_kubebench() {
-  curl -L -O https://github.com/aquasecurity/kube-bench/releases/download/v${kube_bench_vers}/kube-bench_${kube_bench_vers}_linux_arm64.deb
-  apt install ./kube-bench_${kube_bench_vers}_linux_arm64.deb -f
-  rm -f ./kube-bench_${kube_bench_vers}_linux_arm64.deb
+  curl -L -O https://github.com/aquasecurity/kube-bench/releases/download/v${kube_bench_vers}/kube-bench_${kube_bench_vers}_linux_${archi}.deb
+  apt install ./kube-bench_${kube_bench_vers}_linux_${archi}.deb -f
+  rm -f ./kube-bench_${kube_bench_vers}_linux_${archi}.deb
 }
 
 function enforce_security() {
@@ -176,8 +176,8 @@ fi
 mkdir /root/.kube
 cp /etc/kubernetes/admin.conf /root/.kube/config
 mkdir /home/${linux_user}/.kube
-install -m 644 -o ${linux_user} -g ${linux_user} /etc/kubernetes/admin.conf /home/${linux_user}/.kube/
-mv /home/${linux_user}/.kube/admin.conf /home/${linux_user}/.kube/config
+install -m 600 /etc/kubernetes/admin.conf /home/${linux_user}/.kube/config
+chown -R ubuntu:ubuntu /home/${linux_user}/.kube
 echo 'alias k=kubectl' >> /root/.bashrc
 echo 'source /usr/share/bash-completion/bash_completion' >> /root/.bashrc
 [ -d /etc/bash_completion.d ] || mkdir /etc/bash_completion.d
