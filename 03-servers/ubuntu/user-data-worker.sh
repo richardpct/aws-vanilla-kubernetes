@@ -113,6 +113,10 @@ sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config
 curl -L -O https://github.com/opencontainers/runc/releases/download/v${runc_vers}/runc.${archi}
 install -m 755 runc.${archi} /usr/local/sbin/runc
 
+curl -L -O https://github.com/containernetworking/plugins/releases/download/v${cni_plugins_vers}/cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
+sudo mkdir -p /opt/cni/bin
+sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
+
 systemctl daemon-reload
 systemctl start containerd
 systemctl enable containerd
@@ -163,6 +167,6 @@ done
 umount /nfs
 
 install_kubebench
-install_falco
+#install_falco
 
 echo 'Done'

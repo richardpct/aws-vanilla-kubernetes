@@ -22,6 +22,7 @@ resource "kubernetes_secret" "www2_cert" {
 }
 
 resource "helm_release" "cilium" {
+  count            = data.terraform_remote_state.servers.outputs.use_cilium ? 1 : 0
   name             = "cilium"
   repository       = "https://helm.cilium.io/"
   chart            = "cilium"
@@ -80,13 +81,44 @@ resource "helm_release" "cilium" {
   }
 }
 
+resource "helm_release" "calico" {
+  count            = data.terraform_remote_state.servers.outputs.use_cilium ? 0 : 1
+  name             = "projectcalico"
+  repository       = "https://docs.tigera.io/calico/charts"
+  chart            = "tigera-operator"
+  namespace        = "tigera-operator"
+  create_namespace = true
+  force_update     = true
+}
+
+resource "helm_release" "haproxy_ingress" {
+  count            = data.terraform_remote_state.servers.outputs.use_cilium ? 0 : 1
+  name             = "haproxytech"
+  repository       = "https://haproxytech.github.io/helm-charts"
+  chart            = "kubernetes-ingress"
+  namespace        = "haproxy-controller"
+  create_namespace = true
+  force_update     = true
+
+  set {
+    name  = "controller.service.nodePorts.http"
+    value = local.nodeport_http
+  }
+  set {
+    name  = "controller.service.nodePorts.https"
+    value = 30443
+  }
+  set {
+    name  = "controller.service.nodePorts.stat"
+    value = 30002
+  }
+}
+
 resource "helm_release" "metrics_server" {
   name         = "metrics-server"
   repository   = "https://kubernetes-sigs.github.io/metrics-server"
   chart        = "metrics-server"
   force_update = true
-
-  depends_on = [helm_release.cilium]
 
   set {
     name  = "args"
@@ -102,7 +134,7 @@ resource "helm_release" "longhorn" {
   create_namespace = true
   force_update     = true
 
-  depends_on = [helm_release.cilium]
+#  depends_on = [helm_release.calico]
 }
 
 #resource "helm_release" "gatekeeper" {

@@ -133,6 +133,10 @@ curl -L -O https://github.com/opencontainers/runc/releases/download/v${runc_vers
 install -m 755 runc.${archi} /usr/local/sbin/runc
 rm runc.${archi}
 
+curl -L -O https://github.com/containernetworking/plugins/releases/download/v${cni_plugins_vers}/cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
+sudo mkdir -p /opt/cni/bin
+sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
+
 systemctl daemon-reload
 systemctl start containerd
 systemctl enable containerd
@@ -163,11 +167,19 @@ if [ ! -f /nfs/first ]; then
 fi
 
 if [[ $CONTROL_PLANE == 'first' ]]; then
-  kubeadm init \
+  if ${use_cilium}; then
+    kubeadm init \
     --control-plane-endpoint "${kube_api_internal}:6443" \
     --skip-phases=addon/kube-proxy \
     --apiserver-cert-extra-sans=${kube_api_internet},${kube_api_internal} \
     --upload-certs
+  else
+  kubeadm init \
+    --control-plane-endpoint "${kube_api_internal}:6443" \
+    --apiserver-cert-extra-sans=${kube_api_internet},${kube_api_internal} \
+    --pod-network-cidr=10.0.0.0/16 \
+    --upload-certs
+  fi
 else
   while [ ! -f /nfs/master.sh ]; do sleep 5; done
   /nfs/master.sh
