@@ -82,5 +82,5 @@ variable "my_ip_address" {
 variable "use_cilium" {
   type        = bool
   description = "Use Cilium or Calico CNI"
-  default     = false
+  default     = true
 }
