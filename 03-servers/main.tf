@@ -153,6 +153,7 @@ resource "aws_launch_configuration" "kubernetes_worker" {
                                    runc_vers        = local.runc_vers,
                                    cni_plugins_vers = local.cni_plugins_vers,
                                    kube_bench_vers  = local.kube_bench_vers,
+                                   use_rook         = var.use_rook,
                                    nfs_port         = local.nfs_port,
                                    efs_dns_name     = aws_efs_file_system.efs.dns_name })
   instance_type   = local.instance_type_worker

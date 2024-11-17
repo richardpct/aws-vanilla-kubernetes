@@ -84,3 +84,9 @@ variable "use_cilium" {
   description = "Use Cilium or Calico CNI"
   default     = true
 }
+
+variable "use_rook" {
+  type        = bool
+  description = "Use Rook Ceph or Longhorn CSI"
+  default     = true
+}

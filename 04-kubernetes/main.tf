@@ -126,7 +126,38 @@ resource "helm_release" "metrics_server" {
   }
 }
 
+resource "helm_release" "rook-ceph-operator" {
+  count            = data.terraform_remote_state.servers.outputs.use_rook ? 1 : 0
+  name             = "rook-ceph"
+  repository       = "https://charts.rook.io/release"
+  chart            = "rook-ceph"
+  namespace        = "rook-ceph"
+  create_namespace = true
+  force_update     = true
+
+  values = [
+    "${file("helm-charts/rook-ceph-operator-values.yaml")}"
+  ]
+}
+
+resource "helm_release" "rook-ceph-cluster" {
+  count            = data.terraform_remote_state.servers.outputs.use_rook ? 1 : 0
+  name             = "rook-ceph-cluster"
+  repository       = "https://charts.rook.io/release"
+  chart            = "rook-ceph-cluster"
+  namespace        = "rook-ceph"
+  create_namespace = true
+  force_update     = true
+
+  values = [
+    "${file("helm-charts/rook-ceph-cluster-values.yaml")}"
+  ]
+
+  depends_on = [helm_release.rook-ceph-operator]
+}
+
 resource "helm_release" "longhorn" {
+  count            = data.terraform_remote_state.servers.outputs.use_rook ? 0 : 1
   name             = "longhorn"
   repository       = "https://charts.longhorn.io"
   chart            = "longhorn"
@@ -134,7 +165,6 @@ resource "helm_release" "longhorn" {
   create_namespace = true
   force_update     = true
 
-#  depends_on = [helm_release.calico]
 }
 
 #resource "helm_release" "gatekeeper" {

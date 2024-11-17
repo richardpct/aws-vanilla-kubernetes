@@ -129,25 +129,27 @@ apt-get update
 apt-get install -y kubelet kubeadm kubectl
 apt-mark hold kubelet kubeadm kubectl
 
-mkdir /var/lib/longhorn
-longhorn_disk=''
+if ! ${use_rook}; then
+  mkdir /var/lib/longhorn
+  longhorn_disk=''
 
-for disk in $(nvme list | awk '/nvme/{print $1}'); do
-  if ! blkid $disk > /dev/null 2>&1; then
-    longhorn_disk=$disk
-    break
+  for disk in $(nvme list | awk '/nvme/{print $1}'); do
+    if ! blkid $disk > /dev/null 2>&1; then
+      longhorn_disk=$disk
+      break
+    fi
+  done
+
+  if [ $longhorn_disk == '' ]; then
+    echo 'No additional disk found'
+    exit 1
   fi
-done
 
-if [ $longhorn_disk == '' ]; then
-  echo 'No additional disk found'
-  exit 1
+  mkfs.ext4 $longhorn_disk
+  tune2fs -L "longhorn" $longhorn_disk
+  echo 'LABEL=longhorn    /var/lib/longhorn    ext4    defaults    0 0' >> /etc/fstab
+  mount /var/lib/longhorn
 fi
-
-mkfs.ext4 $longhorn_disk
-tune2fs -L "longhorn" $longhorn_disk
-echo 'LABEL=longhorn    /var/lib/longhorn    ext4    defaults    0 0' >> /etc/fstab
-mount /var/lib/longhorn
 
 mkdir /nfs
 
