@@ -1,7 +1,7 @@
 locals {
   distribution          = "ubuntu" // amazonlinux or ubuntu
   linux_user            = local.distribution == "ubuntu" ? "ubuntu" : "ec2-user"
-  archi                 = "amd64" // amd64 or arm64
+  archi                 = "arm64" // amd64 or arm64
   kube_vers             = "1.31"
   containerd_vers       = "1.7.23"
   runc_vers             = "1.2.1"
@@ -16,7 +16,7 @@ locals {
   nodeport_http         = 30080
   nodeport_https        = 30443
   anywhere              = ["0.0.0.0/0"]
-  instance_type_bastion = local.archi == "arm64" ? "t4g.micro"  : "t3a.nano"
+  instance_type_bastion = local.archi == "arm64" ? "t4g.nano"  : "t3a.nano"
   instance_type_master  = local.archi == "arm64" ? "t4g.small"  : "t3a.small"
   instance_type_worker  = local.archi == "arm64" ? "t4g.small"  : "t3a.small"
   bastion_price         = local.archi == "arm64" ? "0.005" : "0.0025"
