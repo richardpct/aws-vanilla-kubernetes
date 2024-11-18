@@ -126,6 +126,17 @@ resource "helm_release" "metrics_server" {
   }
 }
 
+resource "null_resource" "get_rook-ceph-operator-values" {
+  count = data.terraform_remote_state.servers.outputs.use_rook ? 1 : 0
+  provisioner "local-exec" {
+    command = <<EOF
+curl -o /tmp/rook-ceph-operator-values.yaml https://raw.githubusercontent.com/rook/rook/refs/heads/master/deploy/charts/rook-ceph/values.yaml
+sed -i -e 's/cpu:.*/cpu:/' /tmp/rook-ceph-operator-values.yaml
+sed -i -e 's/memory:.*/memory:/' /tmp/rook-ceph-operator-values.yaml
+    EOF
+  }
+}
+
 resource "helm_release" "rook-ceph-operator" {
   count            = data.terraform_remote_state.servers.outputs.use_rook ? 1 : 0
   name             = "rook-ceph"
@@ -136,8 +147,25 @@ resource "helm_release" "rook-ceph-operator" {
   force_update     = true
 
   values = [
-    "${file("helm-charts/rook-ceph-operator-values.yaml")}"
+    "${file("/tmp/rook-ceph-operator-values.yaml")}"
   ]
+
+  depends_on = [null_resource.get_rook-ceph-operator-values]
+}
+
+resource "null_resource" "get_rook-ceph-cluster-values" {
+  count = data.terraform_remote_state.servers.outputs.use_rook ? 1 : 0
+  provisioner "local-exec" {
+    command = <<EOF
+curl -o /tmp/rook-ceph-cluster-values.yaml https://raw.githubusercontent.com/rook/rook/refs/heads/master/deploy/charts/rook-ceph-cluster/values.yaml
+sed -i -e 's/cpu:.*/cpu:/' /tmp/rook-ceph-cluster-values.yaml
+sed -i -e 's/memory:.*/memory:/' /tmp/rook-ceph-cluster-values.yaml
+# Issue when using arm64 -> https://github.com/rook/rook/issues/14502
+sed -i -e 's/v18.2.4/v18.2.2/' /tmp/rook-ceph-cluster-values.yaml
+    EOF
+  }
+
+  depends_on = [helm_release.rook-ceph-operator]
 }
 
 resource "helm_release" "rook-ceph-cluster" {
@@ -150,10 +178,10 @@ resource "helm_release" "rook-ceph-cluster" {
   force_update     = true
 
   values = [
-    "${file("helm-charts/rook-ceph-cluster-values.yaml")}"
+    "${file("/tmp/rook-ceph-cluster-values.yaml")}"
   ]
 
-  depends_on = [helm_release.rook-ceph-operator]
+  depends_on = [null_resource.get_rook-ceph-cluster-values]
 }
 
 resource "helm_release" "longhorn" {
@@ -164,7 +192,6 @@ resource "helm_release" "longhorn" {
   namespace        = "longhorn-system"
   create_namespace = true
   force_update     = true
-
 }
 
 #resource "helm_release" "gatekeeper" {
