@@ -43,21 +43,34 @@ resource "aws_eip" "bastion" {
   }
 }
 
-resource "aws_launch_configuration" "bastion" {
-  name                        = "bastion"
-  image_id                    = data.aws_ami.linux.id
-  user_data                   = templatefile("${local.distribution}/user-data-bastion.sh",
-                                             { eip_bastion_id = aws_eip.bastion.id,
-                                               efs_dns_name   = aws_efs_file_system.efs.dns_name,
-                                               nfs_port       = local.nfs_port,
-                                               region         = var.region,
-                                               archi          = local.archi })
-  instance_type               = local.instance_type_bastion
-  spot_price                  = local.bastion_price
-  key_name                    = aws_key_pair.deployer.key_name
-  security_groups             = [aws_security_group.bastion.id]
-  iam_instance_profile        = aws_iam_instance_profile.profile.name
-  associate_public_ip_address = true
+resource "aws_launch_template" "bastion" {
+  name      = "bastion"
+  image_id  = data.aws_ami.linux.id
+  user_data = base64encode(templatefile("${local.distribution}/user-data-bastion.sh",
+                                        { eip_bastion_id = aws_eip.bastion.id,
+                                          efs_dns_name   = aws_efs_file_system.efs.dns_name,
+                                          nfs_port       = local.nfs_port,
+                                          region         = var.region,
+                                          archi          = local.archi }))
+  instance_type = local.instance_type_bastion
+  key_name      = aws_key_pair.deployer.key_name
+
+  network_interfaces {
+    security_groups             = [aws_security_group.bastion.id]
+    associate_public_ip_address = true
+  }
+
+  iam_instance_profile {
+    name = aws_iam_instance_profile.profile.name
+  }
+
+  instance_market_options {
+    market_type = "spot"
+
+    spot_options {
+      max_price = local.bastion_price
+    }
+  }
 
   lifecycle {
     create_before_destroy = true
@@ -66,10 +79,13 @@ resource "aws_launch_configuration" "bastion" {
 
 resource "aws_autoscaling_group" "bastion" {
   name                 = "asg_bastion"
-  launch_configuration = aws_launch_configuration.bastion.id
   vpc_zone_identifier  = data.terraform_remote_state.network.outputs.subnet_public[*]
   min_size             = local.bastion_min
   max_size             = local.bastion_max
+
+  launch_template {
+    id = aws_launch_template.bastion.id
+  }
 
   tag {
     key                 = "Name"
@@ -78,27 +94,37 @@ resource "aws_autoscaling_group" "bastion" {
   }
 }
 
-resource "aws_launch_configuration" "kubernetes_master" {
-  name            = "Kubernetes master"
-  image_id        = data.aws_ami.linux.id
-  user_data       = templatefile("${local.distribution}/user-data-master.sh",
-                                 { linux_user        = local.linux_user,
-                                   archi             = local.archi,
-                                   kube_vers         = local.kube_vers,
-                                   containerd_vers   = local.containerd_vers,
-                                   runc_vers         = local.runc_vers,
-                                   cni_plugins_vers  = local.cni_plugins_vers,
-                                   kube_bench_vers   = local.kube_bench_vers,
-                                   nfs_port          = local.nfs_port,
-                                   worker_nb         = local.worker_min,
-                                   efs_dns_name      = aws_efs_file_system.efs.dns_name,
-                                   kube_api_internet = aws_lb.internet.dns_name,
-                                   kube_api_internal = aws_lb.api_internal.dns_name,
-                                   use_cilium        = var.use_cilium })
-  instance_type   = local.instance_type_master
-  spot_price      = local.master_price
-  key_name        = aws_key_pair.deployer.key_name
-  security_groups = [aws_security_group.kubernetes_master.id]
+resource "aws_launch_template" "kubernetes_master" {
+  name      = "Kubernetes_master"
+  image_id  = data.aws_ami.linux.id
+  user_data = base64encode(templatefile("${local.distribution}/user-data-master.sh",
+                                        { linux_user        = local.linux_user,
+                                          archi             = local.archi,
+                                          kube_vers         = local.kube_vers,
+                                          containerd_vers   = local.containerd_vers,
+                                          runc_vers         = local.runc_vers,
+                                          cni_plugins_vers  = local.cni_plugins_vers,
+                                          kube_bench_vers   = local.kube_bench_vers,
+                                          nfs_port          = local.nfs_port,
+                                          worker_nb         = local.worker_min,
+                                          efs_dns_name      = aws_efs_file_system.efs.dns_name,
+                                          kube_api_internet = aws_lb.internet.dns_name,
+                                          kube_api_internal = aws_lb.api_internal.dns_name,
+                                          use_cilium        = var.use_cilium }))
+  instance_type = local.instance_type_master
+  key_name      = aws_key_pair.deployer.key_name
+
+  network_interfaces {
+    security_groups = [aws_security_group.kubernetes_master.id]
+  }
+
+  instance_market_options {
+    market_type = "spot"
+
+    spot_options {
+      max_price = local.master_price
+    }
+  }
 
   lifecycle {
     create_before_destroy = true
@@ -106,12 +132,15 @@ resource "aws_launch_configuration" "kubernetes_master" {
 }
 
 resource "aws_autoscaling_group" "kubernetes_master" {
-  name                 = "Kubernetes master"
-  launch_configuration = aws_launch_configuration.kubernetes_master.name
-  vpc_zone_identifier  = data.terraform_remote_state.network.outputs.subnet_private[*]
-  target_group_arns    = [aws_lb_target_group.api.arn, aws_lb_target_group.api_internal.arn]
-  min_size             = local.master_min
-  max_size             = local.master_max
+  name                = "Kubernetes master"
+  vpc_zone_identifier = data.terraform_remote_state.network.outputs.subnet_private[*]
+  target_group_arns   = [aws_lb_target_group.api.arn, aws_lb_target_group.api_internal.arn]
+  min_size            = local.master_min
+  max_size            = local.master_max
+
+  launch_template {
+    id = aws_launch_template.kubernetes_master.id
+  }
 
   tag {
     key                 = "Name"
@@ -143,34 +172,52 @@ sed -i -e "/bastion.${var.my_domain}/d" ~/.ssh/known_hosts
   depends_on = [aws_autoscaling_group.bastion]
 }
 
-resource "aws_launch_configuration" "kubernetes_worker" {
-  name            = "Kubernetes worker"
-  image_id        = data.aws_ami.linux.id
-  user_data       = templatefile("${local.distribution}/user-data-worker.sh",
-                                 { archi            = local.archi,
-                                   kube_vers        = local.kube_vers,
-                                   containerd_vers  = local.containerd_vers,
-                                   runc_vers        = local.runc_vers,
-                                   cni_plugins_vers = local.cni_plugins_vers,
-                                   kube_bench_vers  = local.kube_bench_vers,
-                                   use_rook         = var.use_rook,
-                                   nfs_port         = local.nfs_port,
-                                   efs_dns_name     = aws_efs_file_system.efs.dns_name })
-  instance_type   = local.instance_type_worker
-  spot_price      = local.worker_price
-  key_name        = aws_key_pair.deployer.key_name
-  security_groups = [aws_security_group.kubernetes_worker.id]
+resource "aws_launch_template" "kubernetes_worker" {
+  name      = "Kubernetes_worker"
+  image_id  = data.aws_ami.linux.id
+  user_data = base64encode(templatefile("${local.distribution}/user-data-worker.sh",
+                                        { archi            = local.archi,
+                                          kube_vers        = local.kube_vers,
+                                          containerd_vers  = local.containerd_vers,
+                                          runc_vers        = local.runc_vers,
+                                          cni_plugins_vers = local.cni_plugins_vers,
+                                          kube_bench_vers  = local.kube_bench_vers,
+                                          use_rook         = var.use_rook,
+                                          nfs_port         = local.nfs_port,
+                                          efs_dns_name     = aws_efs_file_system.efs.dns_name }))
+  instance_type = local.instance_type_worker
+  key_name      = aws_key_pair.deployer.key_name
 
-  ebs_block_device {
-    device_name           = "/dev/sdb"
-    volume_size           = var.longhorn_size_worker
-    volume_type           = "gp2"
-    delete_on_termination = true
+  block_device_mappings {
+    device_name = data.aws_ami.linux.root_device_name
+
+    ebs {
+      volume_size           = var.root_size_worker
+      volume_type           = "gp2"
+      delete_on_termination = true
+    }
   }
 
-  root_block_device {
-    volume_size           = var.root_size_worker
-    delete_on_termination = true
+  block_device_mappings {
+    device_name = "/dev/sdb"
+
+    ebs {
+      volume_size           = var.longhorn_size_worker
+      volume_type           = "gp2"
+      delete_on_termination = true
+    }
+  }
+
+  network_interfaces {
+    security_groups = [aws_security_group.kubernetes_worker.id]
+  }
+
+  instance_market_options {
+    market_type = "spot"
+
+    spot_options {
+      max_price = local.worker_price
+    }
   }
 
   lifecycle {
@@ -180,15 +227,42 @@ resource "aws_launch_configuration" "kubernetes_worker" {
 
 resource "aws_autoscaling_group" "kubernetes_worker" {
   name                 = "Kubernetes worker"
-  launch_configuration = aws_launch_configuration.kubernetes_worker.name
   vpc_zone_identifier  = data.terraform_remote_state.network.outputs.subnet_private[*]
   target_group_arns    = [aws_lb_target_group.https.arn]
   min_size             = local.worker_min
   max_size             = local.worker_max
 
+  launch_template {
+    id = aws_launch_template.kubernetes_worker.id
+  }
+
   tag {
     key                 = "Name"
     value               = "kubernetes worker"
     propagate_at_launch = true
+  }
+}
+
+resource "null_resource" "get_rook-ceph-operator-values" {
+  count = var.use_rook ? 1 : 0
+  provisioner "local-exec" {
+    command = <<EOF
+curl -o /tmp/rook-ceph-operator-values.yaml https://raw.githubusercontent.com/rook/rook/refs/heads/master/deploy/charts/rook-ceph/values.yaml
+sed -i -e 's/cpu:.*/cpu:/' /tmp/rook-ceph-operator-values.yaml
+sed -i -e 's/memory:.*/memory:/' /tmp/rook-ceph-operator-values.yaml
+    EOF
+  }
+}
+
+resource "null_resource" "get_rook-ceph-cluster-values" {
+  count = var.use_rook ? 1 : 0
+  provisioner "local-exec" {
+    command = <<EOF
+curl -o /tmp/rook-ceph-cluster-values.yaml https://raw.githubusercontent.com/rook/rook/refs/heads/master/deploy/charts/rook-ceph-cluster/values.yaml
+sed -i -e 's/cpu:.*/cpu:/' /tmp/rook-ceph-cluster-values.yaml
+sed -i -e 's/memory:.*/memory:/' /tmp/rook-ceph-cluster-values.yaml
+# Issue when using arm64 -> https://github.com/rook/rook/issues/14502
+sed -i -e 's/v18.2.4/v18.2.2/' /tmp/rook-ceph-cluster-values.yaml
+    EOF
   }
 }
