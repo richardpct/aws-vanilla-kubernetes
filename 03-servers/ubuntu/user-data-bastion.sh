@@ -23,6 +23,7 @@ function install_awscli() {
   unzip awscliv2.zip
   ./aws/install
   rm awscliv2.zip
+  rm -r aws
 }
 
 function associate_eip() {

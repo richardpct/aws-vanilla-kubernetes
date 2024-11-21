@@ -78,7 +78,8 @@ EOF
 sysctl --system
 
 curl -L -O https://github.com/containerd/containerd/releases/download/v${containerd_vers}/containerd-${containerd_vers}-linux-${archi}.tar.gz
-tar Cxzvf /usr/local containerd-${containerd_vers}-linux-${archi}.tar.gz
+tar Cxzf /usr/local containerd-${containerd_vers}-linux-${archi}.tar.gz
+rm containerd-${containerd_vers}-linux-${archi}.tar.gz
 
 cat <<EOF | tee /lib/systemd/system/containerd.service
 [Unit]
@@ -114,8 +115,9 @@ curl -L -O https://github.com/opencontainers/runc/releases/download/v${runc_vers
 install -m 755 runc.${archi} /usr/local/sbin/runc
 
 curl -L -O https://github.com/containernetworking/plugins/releases/download/v${cni_plugins_vers}/cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
-sudo mkdir -p /opt/cni/bin
-sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
+mkdir -p /opt/cni/bin
+tar Cxzf /opt/cni/bin cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
+rm cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
 
 systemctl daemon-reload
 systemctl start containerd
