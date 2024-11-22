@@ -57,162 +57,185 @@ function enforce_security() {
   chmod 600 /var/lib/kubelet/config.yaml
 }
 
-cd /root
+function configure_system() {
+  cd /root
 
-NUM=`echo $(hostname) | awk -F '-' '{print $4}'`
-NODENAME=control-plane-$NUM
-hostnamectl set-hostname $NODENAME
+  NUM=`echo $(hostname) | awk -F '-' '{print $4}'`
+  NODENAME=control-plane-$NUM
+  hostnamectl set-hostname $NODENAME
 
-apt-get update -y
-apt-get upgrade -y
-apt-get install -y \
-  apt-transport-https \
-  ca-certificates \
-  curl \
-  gnupg \
-  etcd-client \
-  nfs-common \
-  netcat-openbsd \
-  open-iscsi \
-  vim \
-  less \
-  bash-completion \
-  bsdmainutils
+  apt-get update -y
+  apt-get upgrade -y
+  apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg \
+    etcd-client \
+    nfs-common \
+    netcat-openbsd \
+    open-iscsi \
+    vim \
+    less \
+    bash-completion \
+    bsdmainutils
 
-cat <<EOF | tee /etc/modules-load.d/k8s.conf
-overlay
-br_netfilter
+  cat <<EOF | tee /etc/modules-load.d/k8s.conf
+  overlay
+  br_netfilter
 EOF
 
-modprobe overlay
-modprobe br_netfilter
+  modprobe overlay
+  modprobe br_netfilter
 
-cat <<EOF | tee /etc/sysctl.d/k8s.conf
-net.bridge.bridge-nf-call-iptables  = 1
-net.bridge.bridge-nf-call-ip6tables = 1
-net.ipv4.ip_forward                 = 1
+  cat <<EOF | tee /etc/sysctl.d/k8s.conf
+  net.bridge.bridge-nf-call-iptables  = 1
+  net.bridge.bridge-nf-call-ip6tables = 1
+  net.ipv4.ip_forward                 = 1
 EOF
 
-sysctl --system
+  sysctl --system
+}
 
-curl -L -O https://github.com/containerd/containerd/releases/download/v${containerd_vers}/containerd-${containerd_vers}-linux-${archi}.tar.gz
-tar Cxzf /usr/local containerd-${containerd_vers}-linux-${archi}.tar.gz
-rm containerd-${containerd_vers}-linux-${archi}.tar.gz
+function install_containerd() {
+  cd /root
 
-cat <<EOF | tee /lib/systemd/system/containerd.service
-[Unit]
-Description=containerd container runtime
-Documentation=https://containerd.io
-After=network.target local-fs.target
+  curl -L -O https://github.com/containerd/containerd/releases/download/v${containerd_vers}/containerd-${containerd_vers}-linux-${archi}.tar.gz
+  tar Cxzf /usr/local containerd-${containerd_vers}-linux-${archi}.tar.gz
+  rm containerd-${containerd_vers}-linux-${archi}.tar.gz
 
-[Service]
-ExecStartPre=-/sbin/modprobe overlay
-ExecStart=/usr/local/bin/containerd
+  cat <<EOF | tee /lib/systemd/system/containerd.service
+  [Unit]
+  Description=containerd container runtime
+  Documentation=https://containerd.io
+  After=network.target local-fs.target
 
-Type=notify
-Delegate=yes
-KillMode=process
-Restart=always
-RestartSec=5
+  [Service]
+  ExecStartPre=-/sbin/modprobe overlay
+  ExecStart=/usr/local/bin/containerd
 
-LimitNPROC=infinity
-LimitCORE=infinity
+  Type=notify
+  Delegate=yes
+  KillMode=process
+  Restart=always
+  RestartSec=5
 
-TasksMax=infinity
-OOMScoreAdjust=-999
+  LimitNPROC=infinity
+  LimitCORE=infinity
 
-[Install]
-WantedBy=multi-user.target
+  TasksMax=infinity
+  OOMScoreAdjust=-999
+
+  [Install]
+  WantedBy=multi-user.target
 EOF
 
-mkdir /etc/containerd
-containerd config default > /etc/containerd/config.toml
-sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+  mkdir /etc/containerd
+  containerd config default > /etc/containerd/config.toml
+  sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
 
-curl -L -O https://github.com/opencontainers/runc/releases/download/v${runc_vers}/runc.${archi}
-install -m 755 runc.${archi} /usr/local/sbin/runc
-rm runc.${archi}
+  systemctl daemon-reload
+  systemctl start containerd
+  systemctl enable containerd
+}
 
-curl -L -O https://github.com/containernetworking/plugins/releases/download/v${cni_plugins_vers}/cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
-mkdir -p /opt/cni/bin
-tar Cxzf /opt/cni/bin cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
-rm cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
+function install_runc() {
+  cd /root
 
-systemctl daemon-reload
-systemctl start containerd
-systemctl enable containerd
+  curl -L -O https://github.com/opencontainers/runc/releases/download/v${runc_vers}/runc.${archi}
+  install -m 755 runc.${archi} /usr/local/sbin/runc
+  rm runc.${archi}
+}
 
-[ -d /etc/apt/keyrings ] || mkdir -m 755 /etc/apt/keyrings
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v${kube_vers}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${kube_vers}/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
+function install_cni() {
+  cd /root
 
-apt-get update -y
-apt-get install -y kubelet kubeadm kubectl
-apt-mark hold kubelet kubeadm kubectl
+  curl -L -O https://github.com/containernetworking/plugins/releases/download/v${cni_plugins_vers}/cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
+  mkdir -p /opt/cni/bin
+  tar Cxzf /opt/cni/bin cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
+  rm cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
+}
 
-mkdir /nfs
+function install_kube_tools() {
+  [ -d /etc/apt/keyrings ] || mkdir -m 755 /etc/apt/keyrings
+  curl -fsSL https://pkgs.k8s.io/core:/stable:/v${kube_vers}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${kube_vers}/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
 
-while ! nc -w1 ${efs_dns_name} ${nfs_port}; do
-  sleep 5
-done
+  apt-get update -y
+  apt-get install -y kubelet kubeadm kubectl
+  apt-mark hold kubelet kubeadm kubectl
+}
 
-while ! mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${efs_dns_name}:/ /nfs; do
-  sleep 5
-done
+function create_cluster() {
+  mkdir /nfs
 
-sleep $((1 + $RANDOM % 10))
+  while ! nc -w1 ${efs_dns_name} ${nfs_port}; do
+    sleep 5
+  done
 
-if [ ! -f /nfs/first ]; then
-  touch /nfs/first
-  CONTROL_PLANE='first'
-fi
+  while ! mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${efs_dns_name}:/ /nfs; do
+    sleep 5
+  done
 
-if [[ $CONTROL_PLANE == 'first' ]]; then
-  if ${use_cilium}; then
-    kubeadm init \
-    --control-plane-endpoint "${kube_api_internal}:6443" \
-    --skip-phases=addon/kube-proxy \
-    --apiserver-cert-extra-sans=${kube_api_internet},${kube_api_internal} \
-    --upload-certs
-  else
-  kubeadm init \
-    --control-plane-endpoint "${kube_api_internal}:6443" \
-    --apiserver-cert-extra-sans=${kube_api_internet},${kube_api_internal} \
-    --pod-network-cidr=10.0.0.0/16 \
-    --upload-certs
+  if [ ! -f /nfs/first ]; then
+    touch /nfs/first
+    CONTROL_PLANE='first'
   fi
-else
-  while [ ! -f /nfs/master.sh ]; do sleep 5; done
-  /nfs/master.sh
-fi
 
-mkdir /root/.kube
-cp /etc/kubernetes/admin.conf /root/.kube/config
-mkdir /home/${linux_user}/.kube
-install -m 600 /etc/kubernetes/admin.conf /home/${linux_user}/.kube/config
-chown -R ubuntu:ubuntu /home/${linux_user}/.kube
-echo 'alias k=kubectl' >> /root/.bash_aliases
-echo 'alias k=kubectl' >> /home/${linux_user}/.bash_aliases
-chown ubuntu:ubuntu /home/${linux_user}/.bash_aliases
-echo 'source /usr/share/bash-completion/bash_completion' >> /root/.bashrc
-[ -d /etc/bash_completion.d ] || mkdir /etc/bash_completion.d
-kubectl completion bash | tee /etc/bash_completion.d/kubectl > /dev/null
-echo 'complete -o default -F __start_kubectl k' >> /root/.bashrc
+  if [[ $CONTROL_PLANE == 'first' ]]; then
+    if ${use_cilium}; then
+      kubeadm init \
+      --control-plane-endpoint "${kube_api_internal}:6443" \
+      --skip-phases=addon/kube-proxy \
+      --apiserver-cert-extra-sans=${kube_api_internet},${kube_api_internal} \
+      --upload-certs
+    else
+    kubeadm init \
+      --control-plane-endpoint "${kube_api_internal}:6443" \
+      --apiserver-cert-extra-sans=${kube_api_internet},${kube_api_internal} \
+      --pod-network-cidr=10.0.0.0/16 \
+      --upload-certs
+    fi
 
-if [[ $CONTROL_PLANE == 'first' ]]; then
-  install -m 644 /etc/kubernetes/admin.conf /nfs/config
+    install -m 644 /etc/kubernetes/admin.conf /nfs/config
 
-  set +x
-  grep 'kubeadm join' /var/log/user-data.log | head -n 1 > /nfs/master.sh
-  grep -- '--discovery-token-ca-cert-hash' /var/log/user-data.log | head -n 1 >> /nfs/master.sh
-  grep -- '--control-plane --certificate-key' /var/log/user-data.log | head -n 1 >> /nfs/master.sh
+    set +x
+    grep 'kubeadm join' /var/log/user-data.log | head -n 1 > /nfs/master.sh
+    grep -- '--discovery-token-ca-cert-hash' /var/log/user-data.log | head -n 1 >> /nfs/master.sh
+    grep -- '--control-plane --certificate-key' /var/log/user-data.log | head -n 1 >> /nfs/master.sh
 
-  grep 'kubeadm join' /var/log/user-data.log | tail -n 1 > /nfs/worker.sh
-  grep -- '--discovery-token-ca-cert-hash' /var/log/user-data.log | tail -n 1 >> /nfs/worker.sh
-  set -x
-  chmod 755 /nfs/worker.sh
-fi
+    grep 'kubeadm join' /var/log/user-data.log | tail -n 1 > /nfs/worker.sh
+    grep -- '--discovery-token-ca-cert-hash' /var/log/user-data.log | tail -n 1 >> /nfs/worker.sh
+    set -x
+    chmod 755 /nfs/worker.sh
+  else
+    while [ ! -f /nfs/master.sh ]; do sleep 10; done
+    /nfs/master.sh
+  fi
+}
 
+function configure_kube_env() {
+  mkdir /root/.kube
+  cp /etc/kubernetes/admin.conf /root/.kube/config
+  mkdir /home/${linux_user}/.kube
+  install -m 600 /etc/kubernetes/admin.conf /home/${linux_user}/.kube/config
+  chown -R ubuntu:ubuntu /home/${linux_user}/.kube
+  echo 'alias k=kubectl' >> /root/.bash_aliases
+  echo 'alias k=kubectl' >> /home/${linux_user}/.bash_aliases
+  chown ubuntu:ubuntu /home/${linux_user}/.bash_aliases
+  echo 'source /usr/share/bash-completion/bash_completion' >> /root/.bashrc
+  [ -d /etc/bash_completion.d ] || mkdir /etc/bash_completion.d
+  kubectl completion bash | tee /etc/bash_completion.d/kubectl > /dev/null
+  echo 'complete -o default -F __start_kubectl k' >> /root/.bashrc
+}
+
+configure_system
+install_containerd
+install_runc
+install_cni
+install_kube_tools
+create_cluster
+configure_kube_env
 #encrypt_etcd
 audit
 install_kubebench

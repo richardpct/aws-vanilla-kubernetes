@@ -2,6 +2,8 @@
 
 set -x -e
 
+exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+
 function install_packages() {
   apt-get update -y
   apt-get upgrade -y
@@ -40,7 +42,6 @@ function mount_nfs() {
   done
 }
 
-exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 install_packages
 install_awscli
 associate_eip

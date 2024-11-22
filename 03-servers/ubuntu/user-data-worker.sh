@@ -40,136 +40,163 @@ EOF
   systemctl restart falco-modern-bpf
 }
 
-cd /root
+function configure_system() {
+  cd /root
 
-NUM=`echo $(hostname) | awk -F '-' '{print $4}'`
-NODENAME=worker-$NUM
-hostnamectl set-hostname $NODENAME
+  NUM=`echo $(hostname) | awk -F '-' '{print $4}'`
+  NODENAME=worker-$NUM
+  hostnamectl set-hostname $NODENAME
 
-apt-get update
-apt-get upgrade -y
-apt-get install -y \
-  apt-transport-https \
-  ca-certificates \
-  curl \
-  gnupg \
-  ncat \
-  nvme-cli \
-  nfs-common \
-  netcat-openbsd \
-  open-iscsi \
-  vim \
-  less
+  apt-get update
+  apt-get upgrade -y
+  apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg \
+    ncat \
+    nvme-cli \
+    nfs-common \
+    netcat-openbsd \
+    open-iscsi \
+    vim \
+    less
 
-cat <<EOF | tee /etc/modules-load.d/k8s.conf
-overlay
-br_netfilter
+  cat <<EOF | tee /etc/modules-load.d/k8s.conf
+  overlay
+  br_netfilter
 EOF
 
-modprobe overlay
-modprobe br_netfilter
+  modprobe overlay
+  modprobe br_netfilter
 
-cat <<EOF | tee /etc/sysctl.d/k8s.conf
-net.bridge.bridge-nf-call-iptables  = 1
-net.bridge.bridge-nf-call-ip6tables = 1
-net.ipv4.ip_forward                 = 1
+  cat <<EOF | tee /etc/sysctl.d/k8s.conf
+  net.bridge.bridge-nf-call-iptables  = 1
+  net.bridge.bridge-nf-call-ip6tables = 1
+  net.ipv4.ip_forward                 = 1
 EOF
 
-sysctl --system
+  sysctl --system
+}
 
-curl -L -O https://github.com/containerd/containerd/releases/download/v${containerd_vers}/containerd-${containerd_vers}-linux-${archi}.tar.gz
-tar Cxzf /usr/local containerd-${containerd_vers}-linux-${archi}.tar.gz
-rm containerd-${containerd_vers}-linux-${archi}.tar.gz
+function install_containerd() {
+  cd /root
 
-cat <<EOF | tee /lib/systemd/system/containerd.service
-[Unit]
-Description=containerd container runtime
-Documentation=https://containerd.io
-After=network.target local-fs.target
+  curl -L -O https://github.com/containerd/containerd/releases/download/v${containerd_vers}/containerd-${containerd_vers}-linux-${archi}.tar.gz
+  tar Cxzf /usr/local containerd-${containerd_vers}-linux-${archi}.tar.gz
+  rm containerd-${containerd_vers}-linux-${archi}.tar.gz
 
-[Service]
-ExecStartPre=-/sbin/modprobe overlay
-ExecStart=/usr/local/bin/containerd
+  cat <<EOF | tee /lib/systemd/system/containerd.service
+  [Unit]
+  Description=containerd container runtime
+  Documentation=https://containerd.io
+  After=network.target local-fs.target
 
-Type=notify
-Delegate=yes
-KillMode=process
-Restart=always
-RestartSec=5
+  [Service]
+  ExecStartPre=-/sbin/modprobe overlay
+  ExecStart=/usr/local/bin/containerd
 
-LimitNPROC=infinity
-LimitCORE=infinity
+  Type=notify
+  Delegate=yes
+  KillMode=process
+  Restart=always
+  RestartSec=5
 
-TasksMax=infinity
-OOMScoreAdjust=-999
+  LimitNPROC=infinity
+  LimitCORE=infinity
 
-[Install]
-WantedBy=multi-user.target
+  TasksMax=infinity
+  OOMScoreAdjust=-999
+
+  [Install]
+  WantedBy=multi-user.target
 EOF
 
-mkdir /etc/containerd
-containerd config default > /etc/containerd/config.toml
-sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+  mkdir /etc/containerd
+  containerd config default > /etc/containerd/config.toml
+  sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
 
-curl -L -O https://github.com/opencontainers/runc/releases/download/v${runc_vers}/runc.${archi}
-install -m 755 runc.${archi} /usr/local/sbin/runc
+  systemctl daemon-reload
+  systemctl start containerd
+  systemctl enable containerd
+}
 
-curl -L -O https://github.com/containernetworking/plugins/releases/download/v${cni_plugins_vers}/cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
-mkdir -p /opt/cni/bin
-tar Cxzf /opt/cni/bin cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
-rm cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
+function install_runc() {
+  cd /root
 
-systemctl daemon-reload
-systemctl start containerd
-systemctl enable containerd
+  curl -L -O https://github.com/opencontainers/runc/releases/download/v${runc_vers}/runc.${archi}
+  install -m 755 runc.${archi} /usr/local/sbin/runc
+}
 
-[ -d /etc/apt/keyrings ] || mkdir -m 755 /etc/apt/keyrings
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v${kube_vers}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${kube_vers}/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
+function install_cni() {
+  cd /root
 
-apt-get update
-apt-get install -y kubelet kubeadm kubectl
-apt-mark hold kubelet kubeadm kubectl
+  curl -L -O https://github.com/containernetworking/plugins/releases/download/v${cni_plugins_vers}/cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
+  mkdir -p /opt/cni/bin
+  tar Cxzf /opt/cni/bin cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
+  rm cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
+}
 
-if ! ${use_rook}; then
-  mkdir /var/lib/longhorn
-  longhorn_disk=''
+function install_kube_tools() {
+  [ -d /etc/apt/keyrings ] || mkdir -m 755 /etc/apt/keyrings
+  curl -fsSL https://pkgs.k8s.io/core:/stable:/v${kube_vers}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${kube_vers}/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
 
-  for disk in $(nvme list | awk '/nvme/{print $1}'); do
-    if ! blkid $disk > /dev/null 2>&1; then
-      longhorn_disk=$disk
-      break
+  apt-get update
+  apt-get install -y kubelet kubeadm kubectl
+  apt-mark hold kubelet kubeadm kubectl
+}
+
+function configure_disk() {
+  if ! ${use_rook}; then
+    mkdir /var/lib/longhorn
+    longhorn_disk=''
+
+    for disk in $(nvme list | awk '/nvme/{print $1}'); do
+      if ! blkid $disk > /dev/null 2>&1; then
+        longhorn_disk=$disk
+        break
+      fi
+    done
+
+    if [ $longhorn_disk == '' ]; then
+      echo 'No additional disk found'
+      exit 1
     fi
+
+    mkfs.ext4 $longhorn_disk
+    tune2fs -L "longhorn" $longhorn_disk
+    echo 'LABEL=longhorn    /var/lib/longhorn    ext4    defaults    0 0' >> /etc/fstab
+    mount /var/lib/longhorn
+  fi
+}
+
+function join_node() {
+  mkdir /nfs
+
+  while ! nc -w1 ${efs_dns_name} ${nfs_port}; do
+    sleep 30
   done
 
-  if [ $longhorn_disk == '' ]; then
-    echo 'No additional disk found'
-    exit 1
-  fi
+  while ! mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${efs_dns_name}:/ /nfs; do
+    sleep 10
+  done
 
-  mkfs.ext4 $longhorn_disk
-  tune2fs -L "longhorn" $longhorn_disk
-  echo 'LABEL=longhorn    /var/lib/longhorn    ext4    defaults    0 0' >> /etc/fstab
-  mount /var/lib/longhorn
-fi
+  while [ ! -f /nfs/worker.sh ]; do
+    sleep 10
+  done
 
-mkdir /nfs
+  /nfs/worker.sh
+  umount /nfs
+}
 
-while ! nc -w1 ${efs_dns_name} ${nfs_port}; do
-  sleep 10
-done
-
-while ! mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${efs_dns_name}:/ /nfs; do
-  sleep 10
-done
-
-while [ ! -f /nfs/worker.sh ]; do
-  sleep 10
-done
-
-/nfs/worker.sh
-umount /nfs
-
+configure_system
+install_containerd
+install_runc
+install_cni
+install_kube_tools
+configure_disk
+join_node
 install_kubebench
 #install_falco
 
