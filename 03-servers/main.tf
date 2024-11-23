@@ -116,11 +116,6 @@ resource "aws_launch_template" "kubernetes_master" {
   user_data = base64encode(templatefile("${local.distribution}/user-data-master.sh",
                                         { linux_user        = local.linux_user,
                                           archi             = local.archi,
-                                          kube_vers         = local.kube_vers,
-                                          containerd_vers   = local.containerd_vers,
-                                          runc_vers         = local.runc_vers,
-                                          cni_plugins_vers  = local.cni_plugins_vers,
-                                          kube_bench_vers   = local.kube_bench_vers,
                                           nfs_port          = local.nfs_port,
                                           worker_nb         = local.worker_min,
                                           efs_dns_name      = aws_efs_file_system.efs.dns_name,
@@ -192,15 +187,10 @@ resource "aws_launch_template" "kubernetes_worker" {
   name      = "Kubernetes_worker"
   image_id  = data.aws_ami.linux.id
   user_data = base64encode(templatefile("${local.distribution}/user-data-worker.sh",
-                                        { archi            = local.archi,
-                                          kube_vers        = local.kube_vers,
-                                          containerd_vers  = local.containerd_vers,
-                                          runc_vers        = local.runc_vers,
-                                          cni_plugins_vers = local.cni_plugins_vers,
-                                          kube_bench_vers  = local.kube_bench_vers,
-                                          use_rook         = var.use_rook,
-                                          nfs_port         = local.nfs_port,
-                                          efs_dns_name     = aws_efs_file_system.efs.dns_name }))
+                                        { archi        = local.archi,
+                                          use_rook     = var.use_rook,
+                                          nfs_port     = local.nfs_port,
+                                          efs_dns_name = aws_efs_file_system.efs.dns_name }))
   instance_type = local.instance_type_worker
   key_name      = aws_key_pair.deployer.key_name
 
@@ -263,7 +253,7 @@ resource "null_resource" "get_rook-ceph-operator-values" {
   count = var.use_rook ? 1 : 0
   provisioner "local-exec" {
     command = <<EOF
-curl -o /tmp/rook-ceph-operator-values.yaml https://raw.githubusercontent.com/rook/rook/refs/heads/master/deploy/charts/rook-ceph/values.yaml
+curl -s -o /tmp/rook-ceph-operator-values.yaml https://raw.githubusercontent.com/rook/rook/refs/heads/master/deploy/charts/rook-ceph/values.yaml
 sed -i -e 's/cpu:.*/cpu:/' /tmp/rook-ceph-operator-values.yaml
 sed -i -e 's/memory:.*/memory:/' /tmp/rook-ceph-operator-values.yaml
     EOF
@@ -274,7 +264,7 @@ resource "null_resource" "get_rook-ceph-cluster-values" {
   count = var.use_rook ? 1 : 0
   provisioner "local-exec" {
     command = <<EOF
-curl -o /tmp/rook-ceph-cluster-values.yaml https://raw.githubusercontent.com/rook/rook/refs/heads/master/deploy/charts/rook-ceph-cluster/values.yaml
+curl -s -o /tmp/rook-ceph-cluster-values.yaml https://raw.githubusercontent.com/rook/rook/refs/heads/master/deploy/charts/rook-ceph-cluster/values.yaml
 sed -i -e 's/cpu:.*/cpu:/' /tmp/rook-ceph-cluster-values.yaml
 sed -i -e 's/memory:.*/memory:/' /tmp/rook-ceph-cluster-values.yaml
 # Issue when using arm64 -> https://github.com/rook/rook/issues/14502

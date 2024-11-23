@@ -3,11 +3,6 @@ locals {
   linux_user            = local.distribution == "ubuntu" ? "ubuntu" : "ec2-user"
   archi                 = "arm64" // amd64 or arm64
   bastion_archi         = "amd64" // amd64 or arm64
-  kube_vers             = "1.31"
-  containerd_vers       = "1.7.23"
-  runc_vers             = "1.2.1"
-  cni_plugins_vers      = "1.6.0"
-  kube_bench_vers       = "0.9.1"
   ssh_port              = 22
   http_port             = 80
   https_port            = 443

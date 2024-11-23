@@ -44,9 +44,11 @@ EOF
 }
 
 function install_kubebench() {
-  curl -L -O https://github.com/aquasecurity/kube-bench/releases/download/v${kube_bench_vers}/kube-bench_${kube_bench_vers}_linux_${archi}.deb
-  apt install ./kube-bench_${kube_bench_vers}_linux_${archi}.deb -f
-  rm -f ./kube-bench_${kube_bench_vers}_linux_${archi}.deb
+  local KUBE_BENCH_VERS=$(curl -s https://github.com/aquasecurity/kube-bench | grep '/releases/tag/v' | grep '/releases/tag/v' | sed -e 's/.*\(.[0-9]*\.[0-9]*\.[0-9]\).*/\1/')
+
+  curl -L -O https://github.com/aquasecurity/kube-bench/releases/download/v$KUBE_BENCH_VERS/kube-bench_$${KUBE_BENCH_VERS}_linux_${archi}.deb
+  apt install ./kube-bench_$${KUBE_BENCH_VERS}_linux_${archi}.deb -f
+  rm -f ./kube-bench_$${KUBE_BENCH_VERS}_linux_${archi}.deb
 }
 
 function enforce_security() {
@@ -98,11 +100,13 @@ EOF
 }
 
 function install_containerd() {
+  local CONTAINERD_VERS=$(curl -s https://github.com/containerd/containerd | grep '/releases/tag/v' | sed -e 's/.*\(.[0-9]*\.[0-9]*\.[0-9]\).*/\1/')
+
   cd /root
 
-  curl -L -O https://github.com/containerd/containerd/releases/download/v${containerd_vers}/containerd-${containerd_vers}-linux-${archi}.tar.gz
-  tar Cxzf /usr/local containerd-${containerd_vers}-linux-${archi}.tar.gz
-  rm containerd-${containerd_vers}-linux-${archi}.tar.gz
+  curl -L -O https://github.com/containerd/containerd/releases/download/v$CONTAINERD_VERS/containerd-$CONTAINERD_VERS-linux-${archi}.tar.gz
+  tar Cxzf /usr/local containerd-$CONTAINERD_VERS-linux-${archi}.tar.gz
+  rm containerd-$CONTAINERD_VERS-linux-${archi}.tar.gz
 
   cat <<EOF | tee /lib/systemd/system/containerd.service
   [Unit]
@@ -140,26 +144,32 @@ EOF
 }
 
 function install_runc() {
+  local RUNC_VERS=$(curl -s https://github.com/opencontainers/runc | grep '/releases/tag/v' | sed -e 's/.*\(.[0-9]*\.[0-9]*\.[0-9]\).*/\1/')
+
   cd /root
 
-  curl -L -O https://github.com/opencontainers/runc/releases/download/v${runc_vers}/runc.${archi}
+  curl -L -O https://github.com/opencontainers/runc/releases/download/v$RUNC_VERS/runc.${archi}
   install -m 755 runc.${archi} /usr/local/sbin/runc
   rm runc.${archi}
 }
 
 function install_cni() {
+  local CNI_PLUGINS_VERS=$(curl -s https://github.com/containernetworking/plugins | grep '/releases/tag/v' | sed -e 's/.*\(.[0-9]*\.[0-9]*\.[0-9]\).*/\1/')
+
   cd /root
 
-  curl -L -O https://github.com/containernetworking/plugins/releases/download/v${cni_plugins_vers}/cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
+  curl -L -O https://github.com/containernetworking/plugins/releases/download/v$CNI_PLUGINS_VERS/cni-plugins-linux-${archi}-v$CNI_PLUGINS_VERS.tgz
   mkdir -p /opt/cni/bin
-  tar Cxzf /opt/cni/bin cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
-  rm cni-plugins-linux-${archi}-v${cni_plugins_vers}.tgz
+  tar Cxzf /opt/cni/bin cni-plugins-linux-${archi}-v$CNI_PLUGINS_VERS.tgz
+  rm cni-plugins-linux-${archi}-v$CNI_PLUGINS_VERS.tgz
 }
 
 function install_kube_tools() {
+  local KUBE_VERS=$(curl -s https://github.com/kubernetes/kubernetes | grep '/releases/tag/v' | sed -e 's/.*\(.[0-9]*\.[0-9]*\)\..*/\1/')
+
   [ -d /etc/apt/keyrings ] || mkdir -m 755 /etc/apt/keyrings
-  curl -fsSL https://pkgs.k8s.io/core:/stable:/v${kube_vers}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-  echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${kube_vers}/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
+  curl -fsSL https://pkgs.k8s.io/core:/stable:/v$KUBE_VERS/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v$KUBE_VERS/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
 
   apt-get update -y
   apt-get install -y kubelet kubeadm kubectl
