@@ -14,14 +14,14 @@ locals {
   anywhere              = ["0.0.0.0/0"]
   instance_type_bastion = local.bastion_archi == "arm64" ? "t4g.nano" : "t3a.nano"
   instance_type_master  = local.archi == "arm64" ? "t4g.small" : "t3a.small"
-  instance_type_worker  = local.archi == "arm64" ? "t4g.small" : "t3a.small"
+  instance_type_worker  = local.archi == "arm64" ? "t4g.medium" : "t3a.small"
   bastion_price         = local.archi == "arm64" ? "0.0025" : "0.002"
   bastion_min           = 1
   bastion_max           = 1
-  master_price          = local.archi == "arm64" ? "0.0065" : "0.0095"
+  master_price          = local.archi == "arm64" ? "0.011" : "0.011"
   master_min            = 3
   master_max            = 3
-  worker_price          = local.archi == "arm64" ? "0.0065" : "0.0095"
+  worker_price          = local.archi == "arm64" ? "0.011" : "0.011"
   worker_min            = 3
   worker_max            = 3
   record_dns            = toset(["grafana", "vault", "www2", "argocd"])

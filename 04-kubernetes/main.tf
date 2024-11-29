@@ -77,6 +77,22 @@ resource "helm_release" "cilium" {
     name  = "encryption.type"
     value = "wireguard"
   }
+  set {
+    name  = "prometheus.enabled"
+    value = "true"
+  }
+  set {
+    name  = "operator.prometheus.enabled"
+    value = "true"
+  }
+  set {
+    name  = "hubble.enabled"
+    value = "true"
+  }
+  set {
+    name  = "hubble.metrics.enabled"
+    value = "{dns,drop,tcp,flow,port-distribution,httpV2}"
+  }
 }
 
 resource "helm_release" "calico" {
