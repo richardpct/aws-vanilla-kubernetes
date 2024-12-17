@@ -16,7 +16,7 @@ data "aws_ami" "amazonlinux" {
     values = ["hvm"]
   }
 
-  owners = ["137112412989"] # Amazon
+  owners = [local.amazonlinux_owner_id] # Amazon
 }
 
 data "aws_ami" "linux" {
@@ -32,7 +32,7 @@ data "aws_ami" "linux" {
     values = ["hvm"]
   }
 
-  owners = [local.distribution == "ubuntu" ? "099720109477" : "137112412989"]
+  owners = [local.distribution == "ubuntu" ? local.ubuntu_owner_id : local.amazonlinux_owner_id]
 }
 
 data "aws_ami" "bastion_linux" {
@@ -48,7 +48,7 @@ data "aws_ami" "bastion_linux" {
     values = ["hvm"]
   }
 
-  owners = [local.distribution == "ubuntu" ? "099720109477" : "137112412989"]
+  owners = [local.distribution == "ubuntu" ? local.ubuntu_owner_id : local.amazonlinux_owner_id]
 }
 
 resource "aws_eip" "bastion" {
@@ -268,7 +268,7 @@ curl -s -o /tmp/rook-ceph-cluster-values.yaml https://raw.githubusercontent.com/
 sed -i -e 's/cpu:.*/cpu:/' /tmp/rook-ceph-cluster-values.yaml
 sed -i -e 's/memory:.*/memory:/' /tmp/rook-ceph-cluster-values.yaml
 # Issue when using arm64 -> https://github.com/rook/rook/issues/14502
-sed -i -e 's/v18.2.4/v18.2.2/' /tmp/rook-ceph-cluster-values.yaml
+# sed -i -e 's/v18.2.4/v18.2.2/' /tmp/rook-ceph-cluster-values.yaml
     EOF
   }
 }
