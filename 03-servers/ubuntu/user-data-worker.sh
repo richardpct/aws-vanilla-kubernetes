@@ -197,6 +197,9 @@ function join_node() {
     sleep 10
   done
 
+  # TODO: do better!
+  sleep 10
+
   /nfs/worker.sh
   umount /nfs
 }
