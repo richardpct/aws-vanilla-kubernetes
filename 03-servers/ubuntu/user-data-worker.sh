@@ -197,8 +197,9 @@ function join_node() {
     sleep 10
   done
 
-  # TODO: do better!
-  sleep 10
+  while ! nc -w1 ${kube_api_internal} 6443; do
+    sleep 10
+  done
 
   /nfs/worker.sh
   umount /nfs
