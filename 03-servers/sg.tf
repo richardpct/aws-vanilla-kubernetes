@@ -266,6 +266,16 @@ resource "aws_security_group_rule" "efs_from_worker" {
   security_group_id        = aws_security_group.efs.id
 }
 
+resource "aws_security_group_rule" "bastion_from_worker" {
+  type                     = "ingress"
+  from_port                = 9100
+  to_port                  = 9100
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.kubernetes_worker.id
+  security_group_id        = aws_security_group.bastion.id
+}
+
+
 resource "aws_security_group" "lb_internet" {
   name   = "sg_lb_internet"
   vpc_id = data.terraform_remote_state.network.outputs.vpc_id
@@ -282,6 +292,13 @@ resource "aws_security_group" "lb_internet" {
     to_port     = local.https_port
     protocol    = "tcp"
     cidr_blocks = [var.my_ip_address]
+  }
+
+  ingress {
+    from_port   = local.https_port
+    to_port     = local.https_port
+    protocol    = "tcp"
+    cidr_blocks = [for nat_ip in data.terraform_remote_state.network.outputs.aws_eip_nat_ip : "${nat_ip}/32"]
   }
 
   egress {

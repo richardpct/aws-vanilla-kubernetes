@@ -187,10 +187,11 @@ resource "aws_launch_template" "kubernetes_worker" {
   name      = "Kubernetes_worker"
   image_id  = data.aws_ami.linux.id
   user_data = base64encode(templatefile("${local.distribution}/user-data-worker.sh",
-                                        { archi        = local.archi,
-                                          use_rook     = var.use_rook,
-                                          nfs_port     = local.nfs_port,
-                                          efs_dns_name = aws_efs_file_system.efs.dns_name }))
+                                        { archi             = local.archi,
+                                          use_rook          = var.use_rook,
+                                          nfs_port          = local.nfs_port,
+                                          kube_api_internal = aws_lb.api_internal.dns_name,
+                                          efs_dns_name      = aws_efs_file_system.efs.dns_name }))
   instance_type = local.instance_type_worker
   key_name      = aws_key_pair.deployer.key_name
 
