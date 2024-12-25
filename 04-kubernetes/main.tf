@@ -167,6 +167,19 @@ resource "helm_release" "rook-ceph-cluster" {
     "${file("/tmp/rook-ceph-cluster-values.yaml")}"
   ]
 
+  set {
+    name  = "toolbox.enabled"
+    value = "true"
+  }
+  set {
+    name  = "cephFileSystems[0].storageClass.enabled"
+    value = "false"
+  }
+  set {
+    name  = "cephObjectStores[0].storageClass.enabled"
+    value = "false"
+  }
+
   depends_on = [helm_release.rook-ceph-operator]
 }
 
