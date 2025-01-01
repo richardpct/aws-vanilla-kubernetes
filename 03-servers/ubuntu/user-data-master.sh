@@ -217,10 +217,11 @@ function create_cluster() {
     grep 'kubeadm join' /var/log/user-data.log | tail -n 1 > /nfs/worker.sh
     grep -- '--discovery-token-ca-cert-hash' /var/log/user-data.log | tail -n 1 >> /nfs/worker.sh
     set -x
+    chmod 755 /nfs/master.sh
     chmod 755 /nfs/worker.sh
   else
     while [ ! -f /nfs/master.sh ]; do sleep 10; done
-    /nfs/master.sh
+    while ! /nfs/master.sh; do sleep 10; done
   fi
 }
 
