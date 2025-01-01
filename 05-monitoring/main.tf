@@ -8,9 +8,16 @@ provider "helm" {
   }
 }
 
+resource "kubernetes_namespace" "monitoring" {
+  metadata {
+    name = "monitoring"
+  }
+}
+
 resource "kubernetes_secret" "grafana_cert" {
   metadata {
-    name = "grafana-cert"
+    name      = "grafana-cert"
+    namespace = "monitoring"
   }
 
   type = "tls"
@@ -19,13 +26,17 @@ resource "kubernetes_secret" "grafana_cert" {
     "tls.crt" = data.terraform_remote_state.certificate.outputs.grafana_certificate
     "tls.key" = data.terraform_remote_state.certificate.outputs.grafana_private_key
   }
+
+  depends_on = [kubernetes_namespace.monitoring]
 }
 
 resource "helm_release" "loki-stack" {
-  name         = "loki-stack"
-  repository   = "https://grafana.github.io/helm-charts"
-  chart        = "loki-stack"
-  force_update = true
+  name             = "loki-stack"
+  repository       = "https://grafana.github.io/helm-charts"
+  chart            = "loki-stack"
+  namespace        = "monitoring"
+  create_namespace = true
+  force_update     = true
 
   set {
     name  = "loki.auth_enabled"
