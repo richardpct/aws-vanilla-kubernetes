@@ -3,7 +3,7 @@ provider "kubernetes" {
 }
 
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     config_path = "~/.kube/config-aws"
   }
 }
@@ -27,36 +27,38 @@ resource "helm_release" "argocd" {
   chart        = "argo-cd"
   force_update = true
 
-  set {
-    name  = "configs.params.server\\.insecure"
-    value = "true"
-  }
-  set {
-    name  = "server.ingress.enabled"
-    value = "true"
-  }
-  set {
-    name  = "server.ingress.ingressClassName"
-    value = "cilium"
-  }
-  set {
-    name  = "server.ingress.pathType"
-    value = "Prefix"
-  }
-  set {
-    name  = "server.ingress.hostname"
-    value = "argocd.${var.my_domain}"
-  }
-  set {
-    name  = "server.ingress.paths"
-    value = "/"
-  }
-  set {
-    name  = "server.ingress.extraTls[0].secretName"
-    value = "argocd-tls"
-  }
-  set {
-    name  = "server.ingress.extraTls[0].hosts[0]"
-    value = "argocd.${var.my_domain}"
-  }
+  set = [
+    {
+      name  = "configs.params.server\\.insecure"
+      value = "true"
+    },
+    {
+      name  = "server.ingress.enabled"
+      value = "true"
+    },
+    {
+      name  = "server.ingress.ingressClassName"
+      value = "cilium"
+    },
+    {
+      name  = "server.ingress.pathType"
+      value = "Prefix"
+    },
+    {
+      name  = "server.ingress.hostname"
+      value = "argocd.${var.my_domain}"
+    },
+    {
+      name  = "server.ingress.paths"
+      value = "/"
+    },
+    {
+      name  = "server.ingress.extraTls[0].secretName"
+      value = "argocd-tls"
+    },
+    {
+      name  = "server.ingress.extraTls[0].hosts[0]"
+      value = "argocd.${var.my_domain}"
+    }
+  ]
 }

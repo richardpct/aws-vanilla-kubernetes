@@ -3,7 +3,7 @@ provider "kubernetes" {
 }
 
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     config_path = "~/.kube/config-aws"
   }
 }
@@ -27,36 +27,38 @@ resource "helm_release" "vault" {
   chart        = "vault"
   force_update = true
 
-  set {
-    name  = "server.ingress.enabled"
-    value = "true"
-  }
-  set {
-    name  = "server.ingress.ingressClassName"
-    value = "cilium"
-  }
-  set {
-    name  = "server.ingress.pathType"
-    value = "Prefix"
-  }
-  set {
-    name  = "server.ingress.hosts[0].host"
-    value = "vault.${var.my_domain}"
-  }
-  set {
-    name  = "server.ingress.hosts[0].paths[0]"
-    value = "/"
-  }
-  set {
-    name  = "server.ingress.tls[0].secretName"
-    value = "vault-cert"
-  }
-  set {
-    name  = "server.ingress.tls[0].hosts[0]"
-    value = "vault.${var.my_domain}"
-  }
-  set {
-    name  = "server.dataStorage.size"
-    value = "1Gi"
-  }
+  set = [
+    {
+      name  = "server.ingress.enabled"
+      value = "true"
+    },
+    {
+      name  = "server.ingress.ingressClassName"
+      value = "cilium"
+    },
+    {
+      name  = "server.ingress.pathType"
+      value = "Prefix"
+    },
+    {
+      name  = "server.ingress.hosts[0].host"
+      value = "vault.${var.my_domain}"
+    },
+    {
+      name  = "server.ingress.hosts[0].paths[0]"
+      value = "/"
+    },
+    {
+      name  = "server.ingress.tls[0].secretName"
+      value = "vault-cert"
+    },
+    {
+      name  = "server.ingress.tls[0].hosts[0]"
+      value = "vault.${var.my_domain}"
+    },
+    {
+      name  = "server.dataStorage.size"
+      value = "1Gi"
+    }
+  ]
 }

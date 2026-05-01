@@ -3,7 +3,7 @@ provider "kubernetes" {
 }
 
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     config_path = "~/.kube/config-aws"
   }
 }
@@ -29,70 +29,84 @@ resource "helm_release" "cilium" {
   namespace    = "kube-system"
   force_update = true
 
-  set {
-    name  = "kubeProxyReplacement"
-    value = "true"
-  }
-  set {
-    name  = "ingressController.enabled"
-    value = "true"
-  }
-  set {
-    name  = "ingressController.loadbalancerMode"
-    value = "shared"
-  }
-  set {
-    name  = "ingressController.service.type"
-    value = "NodePort"
-  }
-  set {
-    name  = "ingressController.service.insecureNodePort"
-    value = "30080"
-  }
-  set {
-    name  = "ingressController.service.secureNodePort"
-    value = "30443"
-  }
-  set {
-    name  = "k8sServiceHost"
-    value = data.terraform_remote_state.servers.outputs.kubernetes_api_internal
-  }
-  set {
-    name  = "k8sServicePort"
-    value = "6443"
-  }
-  set {
-    name  = "hubble.relay.enabled"
-    value = "true"
-  }
-  set {
-    name  = "hubble.ui.enabled"
-    value = "true"
-  }
-  set {
-    name  = "encryption.enabled"
-    value = "true"
-  }
-  set {
-    name  = "encryption.type"
-    value = "wireguard"
-  }
-  set {
-    name  = "prometheus.enabled"
-    value = "true"
-  }
-  set {
-    name  = "operator.prometheus.enabled"
-    value = "true"
-  }
-  set {
-    name  = "hubble.enabled"
-    value = "true"
-  }
-  set {
-    name  = "hubble.metrics.enabled"
-    value = "{dns,drop,tcp,flow,port-distribution,httpV2}"
-  }
+  set = [
+    {
+      name  = "kubeProxyReplacement"
+      value = "true"
+    },
+    {
+      name  = "ingressController.enabled"
+      value = "true"
+    },
+    {
+      name  = "ingressController.loadbalancerMode"
+      value = "shared"
+    },
+    {
+      name  = "ingressController.service.type"
+      value = "NodePort"
+    },
+    {
+      name  = "ingressController.service.insecureNodePort"
+      value = "30080"
+    },
+    {
+      name  = "ingressController.service.secureNodePort"
+      value = "30443"
+    },
+    {
+      name  = "k8sServiceHost"
+      value = data.terraform_remote_state.servers.outputs.kubernetes_api_internal
+    },
+    {
+      name  = "k8sServicePort"
+      value = "6443"
+    },
+    {
+      name  = "hubble.relay.enabled"
+      value = "true"
+    },
+    {
+      name  = "hubble.ui.enabled"
+      value = "true"
+    },
+    {
+      name  = "encryption.enabled"
+      value = "true"
+    },
+    {
+      name  = "encryption.type"
+      value = "wireguard"
+    },
+    {
+      name  = "prometheus.enabled"
+      value = "true"
+    },
+    {
+      name  = "operator.prometheus.enabled"
+      value = "true"
+    },
+    {
+      name  = "hubble.enabled"
+      value = "true"
+    },
+    {
+      name  = "hubble.metrics.enabled"
+      value = "{dns,drop,tcp,flow,port-distribution,httpV2}"
+    },
+    {
+      name  = "ipam.operator.clusterPoolIPv4PodCIDRList"
+      value = "10.42.0.0/16"
+    }
+  ]
+#  set {
+#    name  = "ipv4NativeRoutingCIDR"
+#    value = "10.42.0.0/16"
+#  }
+#  set {
+#    name  = "ipv4.enabled"
+#    value = "true"
+#  }
 }
 
 resource "helm_release" "calico" {
@@ -114,18 +128,20 @@ resource "helm_release" "haproxy_ingress" {
   create_namespace = true
   force_update     = true
 
-  set {
-    name  = "controller.service.nodePorts.http"
-    value = local.nodeport_http
-  }
-  set {
-    name  = "controller.service.nodePorts.https"
-    value = 30443
-  }
-  set {
-    name  = "controller.service.nodePorts.stat"
-    value = 30002
-  }
+  set = [
+    {
+      name  = "controller.service.nodePorts.http"
+      value = local.nodeport_http
+    },
+    {
+      name  = "controller.service.nodePorts.https"
+      value = 30443
+    },
+    {
+      name  = "controller.service.nodePorts.stat"
+      value = 30002
+    }
+  ]
 }
 
 resource "helm_release" "metrics_server" {
@@ -134,10 +150,12 @@ resource "helm_release" "metrics_server" {
   chart        = "metrics-server"
   force_update = true
 
-  set {
-    name  = "args"
-    value = "{--kubelet-insecure-tls=true}"
-  }
+  set = [
+    {
+      name  = "args"
+      value = "{--kubelet-insecure-tls=true}"
+    }
+  ]
 }
 
 resource "helm_release" "rook-ceph-operator" {
@@ -167,18 +185,20 @@ resource "helm_release" "rook-ceph-cluster" {
     "${file("/tmp/rook-ceph-cluster-values.yaml")}"
   ]
 
-  set {
-    name  = "toolbox.enabled"
-    value = "true"
-  }
-  set {
-    name  = "cephFileSystems[0].storageClass.enabled"
-    value = "false"
-  }
-  set {
-    name  = "cephObjectStores[0].storageClass.enabled"
-    value = "false"
-  }
+  set = [
+    {
+      name  = "toolbox.enabled"
+      value = "true"
+    },
+    {
+      name  = "cephFileSystems[0].storageClass.enabled"
+      value = "false"
+    },
+    {
+      name  = "cephObjectStores[0].storageClass.enabled"
+      value = "false"
+    }
+  ]
 
   depends_on = [helm_release.rook-ceph-operator]
 }
