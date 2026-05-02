@@ -185,6 +185,7 @@ resource "helm_release" "rook-ceph-operator" {
   name             = "rook-ceph"
   repository       = "https://charts.rook.io/release"
   chart            = "rook-ceph"
+  version          = "1.19.5"
   namespace        = "rook-ceph"
   create_namespace = true
   force_update     = true
@@ -199,6 +200,7 @@ resource "helm_release" "rook-ceph-cluster" {
   name             = "rook-ceph-cluster"
   repository       = "https://charts.rook.io/release"
   chart            = "rook-ceph-cluster"
+  version          = "1.19.5"
   namespace        = "rook-ceph"
   create_namespace = true
   force_update     = true
