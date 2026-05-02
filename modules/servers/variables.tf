@@ -44,8 +44,6 @@ variable "env" {
   description = "environment"
 }
 
-
-
 variable "network_remote_state_bucket" {
   type        = string
   description = "bucket"
