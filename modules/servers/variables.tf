@@ -98,3 +98,8 @@ variable "use_rook" {
   description = "Use Rook Ceph or Longhorn CSI"
   default     = true
 }
+
+variable "rook_version" {
+  type        = string
+  description = "rook version"
+}

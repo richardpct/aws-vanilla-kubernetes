@@ -12,3 +12,8 @@ output "use_rook" {
   value       = module.servers.use_rook
   description = "use rook ceph or longhorn csi"
 }
+
+output "rook_version" {
+  value       = module.servers.rook_version
+  description = "rook version"
+}

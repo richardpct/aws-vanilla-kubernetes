@@ -185,7 +185,7 @@ resource "helm_release" "rook-ceph-operator" {
   name             = "rook-ceph"
   repository       = "https://charts.rook.io/release"
   chart            = "rook-ceph"
-  version          = "1.19.5"
+  version          = data.terraform_remote_state.servers.outputs.rook_version
   namespace        = "rook-ceph"
   create_namespace = true
   force_update     = true
@@ -200,7 +200,7 @@ resource "helm_release" "rook-ceph-cluster" {
   name             = "rook-ceph-cluster"
   repository       = "https://charts.rook.io/release"
   chart            = "rook-ceph-cluster"
-  version          = "1.19.5"
+  version          = data.terraform_remote_state.servers.outputs.rook_version
   namespace        = "rook-ceph"
   create_namespace = true
   force_update     = true
@@ -236,14 +236,3 @@ resource "helm_release" "longhorn" {
   create_namespace = true
   force_update     = true
 }
-
-#resource "helm_release" "gatekeeper" {
-#  name             = "gatekeeper"
-#  repository       = "https://open-policy-agent.github.io/gatekeeper/charts"
-#  chart            = "gatekeeper"
-#  namespace        = "gatekeeper-system"
-#  create_namespace = true
-#  force_update     = true
-#
-#  depends_on = [helm_release.longhorn]
-#}

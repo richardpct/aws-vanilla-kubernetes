@@ -266,7 +266,7 @@ resource "null_resource" "get_rook-ceph-operator-values" {
   count = var.use_rook ? 1 : 0
   provisioner "local-exec" {
     command = <<EOF
-curl -s -o /tmp/rook-ceph-operator-values.yaml https://raw.githubusercontent.com/rook/rook/refs/tags/v1.19.5/deploy/charts/rook-ceph/values.yaml
+curl -s -o /tmp/rook-ceph-operator-values.yaml https://raw.githubusercontent.com/rook/rook/refs/tags/v${var.rook_version}/deploy/charts/rook-ceph/values.yaml
 sed -i -e 's/cpu:.*/cpu:/' /tmp/rook-ceph-operator-values.yaml
 sed -i -e 's/memory:.*/memory:/' /tmp/rook-ceph-operator-values.yaml
     EOF
@@ -277,11 +277,9 @@ resource "null_resource" "get_rook-ceph-cluster-values" {
   count = var.use_rook ? 1 : 0
   provisioner "local-exec" {
     command = <<EOF
-curl -s -o /tmp/rook-ceph-cluster-values.yaml https://raw.githubusercontent.com/rook/rook/refs/tags/v1.19.5/deploy/charts/rook-ceph-cluster/values.yaml
+curl -s -o /tmp/rook-ceph-cluster-values.yaml https://raw.githubusercontent.com/rook/rook/refs/tags/v${var.rook_version}/deploy/charts/rook-ceph-cluster/values.yaml
 sed -i -e 's/cpu:.*/cpu:/' /tmp/rook-ceph-cluster-values.yaml
 sed -i -e 's/memory:.*/memory:/' /tmp/rook-ceph-cluster-values.yaml
-# Issue when using arm64 -> https://github.com/rook/rook/issues/14502
-# sed -i -e 's/v18.2.4/v18.2.2/' /tmp/rook-ceph-cluster-values.yaml
     EOF
   }
 }

@@ -12,3 +12,8 @@ output "use_rook" {
   value       = var.use_rook
   description = "If use Rook Ceph or Longhorn CSI"
 }
+
+output "rook_version" {
+  value       = var.rook_version
+  description = "rook version"
+}
