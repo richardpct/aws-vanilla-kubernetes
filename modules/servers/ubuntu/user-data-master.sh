@@ -81,6 +81,7 @@ function configure_system() {
     less \
     bash-completion \
     bsdmainutils
+  apt clean
 
   cat <<EOF | tee /etc/modules-load.d/k8s.conf
   overlay
@@ -174,6 +175,7 @@ function install_kube_tools() {
   apt-get update -y
   apt-get install -y kubelet kubeadm kubectl
   apt-mark hold kubelet kubeadm kubectl
+  apt clean
 }
 
 function create_cluster() {

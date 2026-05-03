@@ -66,7 +66,7 @@ variable "root_size_master" {
 variable "root_size_worker" {
   type        = number
   description = "instance worker root size"
-  default     = 15
+  default     = 20
 }
 
 variable "longhorn_size_worker" {
