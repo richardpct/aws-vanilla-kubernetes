@@ -14,28 +14,12 @@ resource "aws_key_pair" "deployer" {
   public_key = var.ssh_public_key
 }
 
-data "aws_ami" "amazonlinux" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["al2023-ami-*-kernel-*-arm64"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  owners = [local.amazonlinux_owner_id] # Amazon
-}
-
 data "aws_ami" "linux" {
   most_recent = true
 
   filter {
     name   = "name"
-    values = [local.distribution == "ubuntu" ? "ubuntu-minimal/images/hvm-ssd-gp3/ubuntu-noble-24.04-${local.archi}-minimal-*" : "al2023-ami-*-kernel-*-${local.archi}"]
+    values = [local.distribution == "ubuntu" ? "ubuntu-minimal/images/hvm-ssd-gp3/ubuntu-${local.ubuntu_version}-${local.archi}-minimal-*" : "${local.amazonlinux_version}-ami-*-kernel-*-${local.archi}"]
   }
 
   filter {
@@ -51,7 +35,7 @@ data "aws_ami" "bastion_linux" {
 
   filter {
     name   = "name"
-    values = [local.distribution == "ubuntu" ? "ubuntu-minimal/images/hvm-ssd-gp3/ubuntu-noble-24.04-${local.bastion_archi}-minimal-*" : "al2023-ami-*-kernel-*-${local.bastion_archi}"]
+    values = [local.distribution == "ubuntu" ? "ubuntu-minimal/images/hvm-ssd-gp3/ubuntu-${local.ubuntu_version}-${local.bastion_archi}-minimal-*" : "${local.amazonlinux_version}-ami-*-kernel-*-${local.bastion_archi}"]
   }
 
   filter {

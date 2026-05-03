@@ -1,6 +1,9 @@
 locals {
   distribution          = "ubuntu" // amazonlinux or ubuntu
   linux_user            = local.distribution == "ubuntu" ? "ubuntu" : "ec2-user"
+  ubuntu_version        = "resolute-26.04"
+  #ubuntu_version        = "noble-24.04"
+  amazonlinux_version   = "al2023"
   amazonlinux_owner_id  = "137112412989"
   ubuntu_owner_id       = "099720109477"
   archi                 = "amd64" // amd64 or arm64
@@ -17,7 +20,7 @@ locals {
   instance_type_bastion = local.bastion_archi == "arm64" ? "t4g.nano" : "t3.nano"
   instance_type_master  = local.archi == "arm64" ? "t4g.small" : "t3.small"
   instance_type_worker  = local.archi == "arm64" ? "t4g.medium" : "t3.medium"
-  bastion_price         = local.archi == "arm64" ? "0.0025" : "0.006"
+  bastion_price         = local.archi == "arm64" ? "0.0025" : "0.001"
   bastion_min           = 1
   bastion_max           = 1
   master_price          = local.archi == "arm64" ? "0.010" : "0.01"

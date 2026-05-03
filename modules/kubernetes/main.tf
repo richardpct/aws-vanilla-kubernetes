@@ -213,14 +213,6 @@ resource "helm_release" "rook-ceph-cluster" {
     {
       name  = "toolbox.enabled"
       value = "true"
-    },
-    {
-      name  = "cephFileSystems[0].storageClass.enabled"
-      value = "false"
-    },
-    {
-      name  = "cephObjectStores[0].storageClass.enabled"
-      value = "false"
     }
   ]
 
