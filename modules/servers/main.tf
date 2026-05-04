@@ -205,7 +205,7 @@ resource "aws_launch_template" "kubernetes_worker" {
     device_name = "/dev/sdb"
 
     ebs {
-      volume_size           = var.longhorn_size_worker
+      volume_size           = var.add_disk_size_worker
       volume_type           = "gp2"
       delete_on_termination = true
     }

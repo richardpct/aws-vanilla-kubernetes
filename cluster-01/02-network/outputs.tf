@@ -6,6 +6,10 @@ output "subnet_private" {
   value = module.network.subnet_private
 }
 
+output "subnet_private_efs" {
+  value = module.network.subnet_private_efs
+}
+
 output "subnet_public" {
   value = module.network.subnet_public
 }

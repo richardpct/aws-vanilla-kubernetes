@@ -21,14 +21,13 @@ locals {
   bastion_min           = 1
   bastion_max           = 1
   instance_type_master  = local.archi == "arm64" ? "t4g.small" : "t3.small"
-  master_price          = local.archi == "arm64" ? "0.010" : "0.01"
+  master_price          = local.archi == "arm64" ? "0.010" : "0.010"
   master_min            = 3
   master_max            = 3
   instance_type_worker  = local.archi == "arm64" ? "t4g.medium" : "t3.medium"
-  worker_price          = local.archi == "arm64" ? "0.025" : "0.02"
+  worker_price          = local.archi == "arm64" ? "0.025" : "0.020"
   worker_min            = 3
   worker_max            = 3
-  record_dns            = toset(["grafana", "argocd"])
 }
 
 variable "aws_profile" {
@@ -56,24 +55,6 @@ variable "network_remote_state_key" {
   description = "bucket network key"
 }
 
-variable "root_size_master" {
-  type        = number
-  description = "master instance root size"
-  default     = 12
-}
-
-variable "root_size_worker" {
-  type        = number
-  description = "worker instance root size"
-  default     = 20
-}
-
-variable "longhorn_size_worker" {
-  type        = number
-  description = "worker instance longhorn size"
-  default     = 15
-}
-
 variable "my_domain" {
   type        = string
   description = "my domain name"
@@ -87,6 +68,24 @@ variable "my_ip_address" {
 variable "ssh_public_key" {
   type        = string
   description = "ssh public key"
+}
+
+variable "root_size_master" {
+  type        = number
+  description = "master instance root size"
+  default     = 12
+}
+
+variable "root_size_worker" {
+  type        = number
+  description = "worker instance root size"
+  default     = 20
+}
+
+variable "add_disk_size_worker" {
+  type        = number
+  description = "worker instance additional disk size"
+  default     = 15
 }
 
 variable "use_cilium" {
@@ -104,4 +103,9 @@ variable "use_rook" {
 variable "rook_version" {
   type        = string
   description = "rook version"
+}
+
+variable "record_dns" {
+  type        = list(string)
+  description = "applications list"
 }

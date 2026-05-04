@@ -11,16 +11,16 @@ resource "aws_route53_record" "bastion" {
 }
 
 resource "aws_route53_record" "name" {
-  for_each = local.record_dns
-  zone_id  = data.aws_route53_zone.main.zone_id
-  name     = each.key
-  type     = "CNAME"
-  ttl      = 5
+  count   = length(var.record_dns)
+  zone_id = data.aws_route53_zone.main.zone_id
+  name    = var.record_dns[count.index]
+  type    = "CNAME"
+  ttl     = 5
 
   weighted_routing_policy {
     weight = 10
   }
 
-  set_identifier = each.key
+  set_identifier = var.record_dns[count.index]
   records        = [aws_lb.external.dns_name]
 }

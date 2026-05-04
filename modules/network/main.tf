@@ -41,6 +41,17 @@ resource "aws_subnet" "private" {
   }
 }
 
+resource "aws_subnet" "private_efs" {
+  count             = length(var.subnet_private_efs)
+  vpc_id            = aws_vpc.my_vpc.id
+  cidr_block        = var.subnet_private_efs[count.index]
+  availability_zone = data.aws_availability_zones.available.names[count.index]
+
+  tags = {
+    Name = "subnet_private_efs_${count.index}"
+  }
+}
+
 resource "aws_subnet" "public" {
   count             = length(var.subnet_public)
   vpc_id            = aws_vpc.my_vpc.id

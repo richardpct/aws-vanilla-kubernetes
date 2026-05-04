@@ -23,6 +23,11 @@ variable "subnet_private" {
   description = "subnet private"
 }
 
+variable "subnet_private_efs" {
+  type        = list(string)
+  description = "subnet private efs"
+}
+
 variable "subnet_public" {
   type        = list(string)
   description = "public subnet"
