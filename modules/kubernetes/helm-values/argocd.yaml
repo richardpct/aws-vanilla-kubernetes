@@ -1,0 +1,53 @@
+global:
+  domain: argocd.unixworld.io
+
+configs:
+  params:
+    server.insecure: true
+
+  secret:
+    argocdServerAdminPassword: "$2a$10$8.jKSk/J.yLXqFQUSGG6dO8nDvx2jtXBHrD/IYqOjG.Fy.HWoKUU."
+
+## Repo Server
+repoServer:
+  # -- Repo server name
+  name: repo-server
+
+  # -- The number of repo server pods to run
+  replicas: 3
+
+  # -- Runtime class name for the repo server
+  # @default -- `""` (defaults to global.runtimeClassName)
+  runtimeClassName: ""
+
+  ## Repo server Horizontal Pod Autoscaler
+  autoscaling:
+    # -- Enable Horizontal Pod Autoscaler ([HPA]) for the repo server
+    enabled: false
+    # -- Minimum number of replicas for the repo server [HPA]
+    minReplicas: 2
+    # -- Maximum number of replicas for the repo server [HPA]
+    maxReplicas: 3
+    # -- Average CPU utilization percentage for the repo server [HPA]
+    targetCPUUtilizationPercentage: 50
+    # -- Average memory utilization percentage for the repo server [HPA]
+    targetMemoryUtilizationPercentage: 50
+    # -- Configures the scaling behavior of the target in both Up and Down directions.
+
+server:
+  replicas: 3
+  ingress:
+    enabled: false
+  httproute:
+    enabled: true
+    parentRefs:
+      - name: tls-gateway
+        namespace: kube-system
+        sectionName: https
+    hostnames:
+      - argocd.unixworld.io
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /

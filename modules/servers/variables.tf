@@ -2,6 +2,7 @@ locals {
   distribution          = "ubuntu" // amazonlinux or ubuntu
   linux_user            = local.distribution == "ubuntu" ? "ubuntu" : "ec2-user"
   ubuntu_version        = "resolute-26.04"
+  #ubuntu_version        = "noble-24.04"
   amazonlinux_version   = "al2023"
   amazonlinux_owner_id  = "137112412989"
   ubuntu_owner_id       = "099720109477"
@@ -86,18 +87,6 @@ variable "add_disk_size_worker" {
   type        = number
   description = "worker instance additional disk size"
   default     = 15
-}
-
-variable "use_cilium" {
-  type        = bool
-  description = "use cilium or calico cni"
-  default     = true
-}
-
-variable "use_rook" {
-  type        = bool
-  description = "use rook ceph or longhorn csi"
-  default     = true
 }
 
 variable "rook_version" {

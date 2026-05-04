@@ -115,8 +115,7 @@ resource "aws_launch_template" "kubernetes_master" {
                                           worker_nb         = local.worker_min,
                                           efs_dns_name      = aws_efs_file_system.efs.dns_name,
                                           kube_api_external = aws_lb.external.dns_name,
-                                          kube_api_internal = aws_lb.api_internal.dns_name,
-                                          use_cilium        = var.use_cilium }))
+                                          kube_api_internal = aws_lb.api_internal.dns_name }))
   instance_type = local.instance_type_master
   key_name      = aws_key_pair.deployer.key_name
 
@@ -184,7 +183,6 @@ resource "aws_launch_template" "kubernetes_worker" {
   image_id  = data.aws_ami.linux.id
   user_data = base64encode(templatefile("${path.module}/${local.distribution}/user-data-worker.sh",
                                         { archi             = local.archi,
-                                          use_rook          = var.use_rook,
                                           nfs_port          = local.nfs_port,
                                           kube_api_internal = aws_lb.api_internal.dns_name,
                                           efs_dns_name      = aws_efs_file_system.efs.dns_name }))
@@ -247,7 +245,6 @@ resource "aws_autoscaling_group" "kubernetes_worker" {
 }
 
 resource "null_resource" "get_rook-ceph-operator-values" {
-  count = var.use_rook ? 1 : 0
   provisioner "local-exec" {
     command = <<EOF
 curl -s -o /tmp/rook-ceph-operator-values.yaml https://raw.githubusercontent.com/rook/rook/refs/tags/v${var.rook_version}/deploy/charts/rook-ceph/values.yaml
@@ -258,7 +255,6 @@ sed -i -e 's/memory:.*/memory:/' /tmp/rook-ceph-operator-values.yaml
 }
 
 resource "null_resource" "get_rook-ceph-cluster-values" {
-  count = var.use_rook ? 1 : 0
   provisioner "local-exec" {
     command = <<EOF
 curl -s -o /tmp/rook-ceph-cluster-values.yaml https://raw.githubusercontent.com/rook/rook/refs/tags/v${var.rook_version}/deploy/charts/rook-ceph-cluster/values.yaml

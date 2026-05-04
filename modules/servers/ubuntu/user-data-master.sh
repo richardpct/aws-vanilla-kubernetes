@@ -195,19 +195,11 @@ function create_cluster() {
   fi
 
   if [[ $CONTROL_PLANE == 'first' ]]; then
-    if ${use_cilium}; then
-      kubeadm init \
-      --control-plane-endpoint "${kube_api_internal}:6443" \
-      --skip-phases=addon/kube-proxy \
-      --apiserver-cert-extra-sans=${kube_api_external},${kube_api_internal} \
-      --upload-certs
-    else
     kubeadm init \
-      --control-plane-endpoint "${kube_api_internal}:6443" \
-      --apiserver-cert-extra-sans=${kube_api_external},${kube_api_internal} \
-      --pod-network-cidr=10.0.0.0/16 \
-      --upload-certs
-    fi
+    --control-plane-endpoint "${kube_api_internal}:6443" \
+    --skip-phases=addon/kube-proxy \
+    --apiserver-cert-extra-sans=${kube_api_external},${kube_api_internal} \
+    --upload-certs
 
     install -m 644 /etc/kubernetes/admin.conf /nfs/config
 

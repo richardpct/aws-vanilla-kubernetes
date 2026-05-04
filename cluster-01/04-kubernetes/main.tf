@@ -7,4 +7,5 @@ module "kubernetes" {
   certificate_remote_state_key    = var.key_certificate
   servers_remote_state_bucket     = var.bucket
   servers_remote_state_key        = var.key_servers
+  gateway_api_version             = "1.5.1"
 }

@@ -20,155 +20,66 @@ data "terraform_remote_state" "servers" {
   }
 }
 
-provider "kubernetes" {
-  config_path = "~/.kube/config-aws"
-}
+resource "kubernetes_secret_v1" "default_tls_cert" {
+  metadata {
+    name      = "default-tls-cert"
+    namespace = "kube-system"
+  }
 
-provider "helm" {
-  kubernetes = {
-    config_path = "~/.kube/config-aws"
+  type = "kubernetes.io/tls"
+
+  data = {
+    "tls.crt" = data.terraform_remote_state.certificate.outputs.wildcard_certificate
+    "tls.key" = data.terraform_remote_state.certificate.outputs.wildcard_private_key
   }
 }
 
+resource "null_resource" "install-gateway-crds" {
+  provisioner "local-exec" {
+    command = <<EOF
+      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml
+      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_gateways.yaml
+      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml
+      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml
+      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml
+    EOF
+  }
+
+  depends_on = [kubernetes_secret_v1.default_tls_cert]
+}
+
+resource "kubectl_manifest" "gateway" {
+  yaml_body = templatefile("${path.module}/manifests/gateway.yaml.tftpl",
+    {
+      gateway_nodeport = "30443"
+    }
+  )
+
+  depends_on = [null_resource.install-gateway-crds]
+}
+
 resource "helm_release" "cilium" {
-  count        = data.terraform_remote_state.servers.outputs.use_cilium ? 1 : 0
   name         = "cilium"
   repository   = "https://helm.cilium.io/"
   chart        = "cilium"
   namespace    = "kube-system"
   force_update = true
 
+  values = [
+    "${file("${path.module}/helm-values/cilium.yaml")}"
+  ]
+
   set = [
-    {
-      name  = "kubeProxyReplacement"
-      value = "true"
-    },
-    {
-      name  = "ingressController.enabled"
-      value = "true"
-    },
-    {
-      name  = "ingressController.loadbalancerMode"
-      value = "shared"
-    },
-    {
-      name  = "ingressController.service.type"
-      value = "NodePort"
-    },
-    {
-      name  = "ingressController.service.insecureNodePort"
-      value = "30080"
-    },
-    {
-      name  = "ingressController.service.secureNodePort"
-      value = "30443"
-    },
     {
       name  = "k8sServiceHost"
       value = data.terraform_remote_state.servers.outputs.kubernetes_api_internal
-    },
-    {
-      name  = "k8sServicePort"
-      value = "6443"
-    },
-    {
-      name  = "hubble.relay.enabled"
-      value = "true"
-    },
-    {
-      name  = "hubble.ui.enabled"
-      value = "true"
-    },
-    {
-      name  = "encryption.enabled"
-      value = "true"
-    },
-    {
-      name  = "encryption.type"
-      value = "wireguard"
-    },
-    {
-      name  = "prometheus.enabled"
-      value = "true"
-    },
-    {
-      name  = "operator.prometheus.enabled"
-      value = "true"
-    },
-    {
-      name  = "hubble.enabled"
-      value = "true"
-    },
-    {
-      name  = "hubble.metrics.enabled"
-      value = "{dns,drop,tcp,flow,port-distribution,httpV2}"
-    },
-    {
-      name  = "ipam.operator.clusterPoolIPv4PodCIDRList"
-      value = "10.42.0.0/16"
     }
   ]
-#  set {
-#    name  = "ipv4NativeRoutingCIDR"
-#    value = "10.42.0.0/16"
-#  }
-#  set {
-#    name  = "ipv4.enabled"
-#    value = "true"
-#  }
-}
 
-resource "helm_release" "calico" {
-  count            = data.terraform_remote_state.servers.outputs.use_cilium ? 0 : 1
-  name             = "projectcalico"
-  repository       = "https://docs.tigera.io/calico/charts"
-  chart            = "tigera-operator"
-  namespace        = "tigera-operator"
-  create_namespace = true
-  force_update     = true
-}
-
-resource "helm_release" "haproxy_ingress" {
-  count            = data.terraform_remote_state.servers.outputs.use_cilium ? 0 : 1
-  name             = "haproxytech"
-  repository       = "https://haproxytech.github.io/helm-charts"
-  chart            = "kubernetes-ingress"
-  namespace        = "haproxy-controller"
-  create_namespace = true
-  force_update     = true
-
-  set = [
-    {
-      name  = "controller.service.nodePorts.http"
-      value = local.nodeport_http
-    },
-    {
-      name  = "controller.service.nodePorts.https"
-      value = 30443
-    },
-    {
-      name  = "controller.service.nodePorts.stat"
-      value = 30002
-    }
-  ]
-}
-
-resource "helm_release" "metrics_server" {
-  name         = "metrics-server"
-  repository   = "https://kubernetes-sigs.github.io/metrics-server"
-  chart        = "metrics-server"
-  force_update = true
-
-  set = [
-    {
-      name  = "args"
-      value = "{--kubelet-insecure-tls=true}"
-    }
-  ]
+  depends_on = [kubectl_manifest.gateway]
 }
 
 resource "helm_release" "rook-ceph-operator" {
-  count            = data.terraform_remote_state.servers.outputs.use_rook ? 1 : 0
   name             = "rook-ceph"
   repository       = "https://charts.rook.io/release"
   chart            = "rook-ceph"
@@ -180,10 +91,11 @@ resource "helm_release" "rook-ceph-operator" {
   values = [
     "${file("/tmp/rook-ceph-operator-values.yaml")}"
   ]
+
+  depends_on = [helm_release.cilium]
 }
 
 resource "helm_release" "rook-ceph-cluster" {
-  count            = data.terraform_remote_state.servers.outputs.use_rook ? 1 : 0
   name             = "rook-ceph-cluster"
   repository       = "https://charts.rook.io/release"
   chart            = "rook-ceph-cluster"
@@ -206,12 +118,18 @@ resource "helm_release" "rook-ceph-cluster" {
   depends_on = [helm_release.rook-ceph-operator]
 }
 
-resource "helm_release" "longhorn" {
-  count            = data.terraform_remote_state.servers.outputs.use_rook ? 0 : 1
-  name             = "longhorn"
-  repository       = "https://charts.longhorn.io"
-  chart            = "longhorn"
-  namespace        = "longhorn-system"
+
+resource "helm_release" "argo_cd" {
+  name             = "argo-cd"
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  namespace        = "argocd"
   create_namespace = true
   force_update     = true
+
+  values = [
+    "${file("${path.module}/helm-values/argocd.yaml")}"
+  ]
+
+  depends_on = [helm_release.rook-ceph-cluster]
 }

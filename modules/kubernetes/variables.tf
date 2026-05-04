@@ -36,3 +36,8 @@ variable "servers_remote_state_key" {
   type        = string
   description = "bucket key servers"
 }
+
+variable "gateway_api_version" {
+  type        = string
+  description = "gateway api version"
+}

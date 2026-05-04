@@ -31,7 +31,9 @@ plan: init ## Dry run
 .PHONY: destroy
 destroy: ## Destroy the infrastructure
 	. $(SECRET_ENV) && \
-	tofu destroy
+	tofu state ls | while read; do tofu state rm $$REPLY; done
+	. $(SECRET_ENV) && \
+	tofu destroy && make destroy -C ../03-servers
 
 .PHONY: clean
 clean: ## Clean
