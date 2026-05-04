@@ -30,19 +30,6 @@ provider "helm" {
   }
 }
 
-resource "kubernetes_secret" "www2_cert" {
-  metadata {
-    name = "www2-cert"
-  }
-
-  type = "tls"
-
-  data = {
-    "tls.crt" = data.terraform_remote_state.certificate.outputs.www2_certificate
-    "tls.key" = data.terraform_remote_state.certificate.outputs.www2_private_key
-  }
-}
-
 resource "helm_release" "cilium" {
   count        = data.terraform_remote_state.servers.outputs.use_cilium ? 1 : 0
   name         = "cilium"

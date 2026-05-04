@@ -1,8 +1,8 @@
-resource "aws_lb" "internet" {
-  name               = "lb-internet"
+resource "aws_lb" "external" {
+  name               = "lb-external"
   internal           = false
   load_balancer_type = "network"
-  security_groups    = [aws_security_group.lb_internet.id]
+  security_groups    = [aws_security_group.lb_external.id]
   subnets            = data.terraform_remote_state.network.outputs.subnet_public[*]
 }
 
@@ -14,7 +14,7 @@ resource "aws_lb_target_group" "api" {
 }
 
 resource "aws_lb_listener" "api" {
-  load_balancer_arn = aws_lb.internet.arn
+  load_balancer_arn = aws_lb.external.arn
   port              = local.kube_api_port
   protocol          = "TCP"
 
@@ -32,7 +32,7 @@ resource "aws_lb_target_group" "https" {
 }
 
 resource "aws_lb_listener" "https" {
-  load_balancer_arn = aws_lb.internet.arn
+  load_balancer_arn = aws_lb.external.arn
   port              = local.https_port
   protocol          = "TCP"
 
@@ -54,7 +54,7 @@ resource "aws_lb_target_group" "api_internal" {
   name               = "lb-target-group-api-internal"
   port               = local.kube_api_port
   protocol           = "TCP"
-  # ec2 can reach out to himself through the NLB
+  # ec2 can reach out to itself through the NLB
   # see https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-troubleshooting.html
   preserve_client_ip = false
   vpc_id             = data.terraform_remote_state.network.outputs.vpc_id

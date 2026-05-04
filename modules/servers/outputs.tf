@@ -1,16 +1,16 @@
 output "kubernetes_api_internal" {
   value       = aws_lb.api_internal.dns_name
-  description = "Kubernetes api internal"
+  description = "kubernetes api internal"
 }
 
 output "use_cilium" {
   value       = var.use_cilium
-  description = "If use Cilium or Calico CNI"
+  description = "if use cilium or calico cni"
 }
 
 output "use_rook" {
   value       = var.use_rook
-  description = "If use Rook Ceph or Longhorn CSI"
+  description = "if use rook ceph or longhorn csi"
 }
 
 output "rook_version" {

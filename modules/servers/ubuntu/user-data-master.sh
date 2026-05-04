@@ -199,12 +199,12 @@ function create_cluster() {
       kubeadm init \
       --control-plane-endpoint "${kube_api_internal}:6443" \
       --skip-phases=addon/kube-proxy \
-      --apiserver-cert-extra-sans=${kube_api_internet},${kube_api_internal} \
+      --apiserver-cert-extra-sans=${kube_api_external},${kube_api_internal} \
       --upload-certs
     else
     kubeadm init \
       --control-plane-endpoint "${kube_api_internal}:6443" \
-      --apiserver-cert-extra-sans=${kube_api_internet},${kube_api_internal} \
+      --apiserver-cert-extra-sans=${kube_api_external},${kube_api_internal} \
       --pod-network-cidr=10.0.0.0/16 \
       --upload-certs
     fi

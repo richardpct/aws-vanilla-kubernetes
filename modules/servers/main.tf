@@ -114,7 +114,7 @@ resource "aws_launch_template" "kubernetes_master" {
                                           nfs_port          = local.nfs_port,
                                           worker_nb         = local.worker_min,
                                           efs_dns_name      = aws_efs_file_system.efs.dns_name,
-                                          kube_api_internet = aws_lb.internet.dns_name,
+                                          kube_api_external = aws_lb.external.dns_name,
                                           kube_api_internal = aws_lb.api_internal.dns_name,
                                           use_cilium        = var.use_cilium }))
   instance_type = local.instance_type_master
@@ -161,7 +161,7 @@ resource "null_resource" "get_kube_config" {
 while ! nc -w1 ${aws_eip.bastion.public_ip} ${local.ssh_port}; do sleep 10; done
 ssh -o StrictHostKeyChecking=accept-new ${local.linux_user}@${aws_eip.bastion.public_ip} 'until [ -f /nfs/config ]; do sleep 10; done'
 [ -d ~/.kube ] || mkdir ~/.kube
-ssh ${local.linux_user}@${aws_eip.bastion.public_ip} 'sed -e "s;https://.*:6443;https://${aws_lb.internet.dns_name}:6443;" /nfs/config' > ~/.kube/config-aws
+ssh ${local.linux_user}@${aws_eip.bastion.public_ip} 'sed -e "s;https://.*:6443;https://${aws_lb.external.dns_name}:6443;" /nfs/config' > ~/.kube/config-aws
 ssh ${local.linux_user}@${aws_eip.bastion.public_ip} 'sudo umount /nfs'
 chmod 600 ~/.kube/config-aws
     EOF

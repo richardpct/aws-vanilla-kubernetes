@@ -106,7 +106,7 @@ if [[ $CONTROL_PLANE == 'first' ]]; then
   kubeadm init \
     --control-plane-endpoint "${kube_api_internal}:6443" \
     --skip-phases=addon/kube-proxy \
-    --apiserver-cert-extra-sans=${kube_api_internet},${kube_api_internal} \
+    --apiserver-cert-extra-sans=${kube_api_external},${kube_api_internal} \
     --upload-certs
 else
   while [ ! -f /nfs/master.sh ]; do sleep 5; done

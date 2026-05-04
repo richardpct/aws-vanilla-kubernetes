@@ -25,7 +25,7 @@ variable "key_servers" {
 
 variable "my_domain" {
   type        = string
-  description = "domain name"
+  description = "my domain name"
 }
 
 variable "my_ip_address" {
