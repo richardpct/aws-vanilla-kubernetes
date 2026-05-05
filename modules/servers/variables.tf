@@ -1,5 +1,5 @@
 locals {
-  distribution          = "ubuntu" // amazonlinux or ubuntu
+  distribution          = "amazonlinux" // amazonlinux or ubuntu
   linux_user            = local.distribution == "ubuntu" ? "ubuntu" : "ec2-user"
   ubuntu_version        = "resolute-26.04"
   amazonlinux_version   = "al2023"

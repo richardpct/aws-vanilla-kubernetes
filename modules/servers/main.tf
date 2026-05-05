@@ -19,7 +19,7 @@ data "aws_ami" "linux" {
 
   filter {
     name   = "name"
-    values = [local.distribution == "ubuntu" ? "ubuntu-minimal/images/hvm-ssd-gp3/ubuntu-${local.ubuntu_version}-${local.archi}-minimal-*" : "${local.amazonlinux_version}-ami-*-kernel-*-${local.archi}"]
+    values = [local.distribution == "ubuntu" ? "ubuntu-minimal/images/hvm-ssd-gp3/ubuntu-${local.ubuntu_version}-${local.archi}-minimal-*" : "${local.amazonlinux_version}-ami-*-kernel-*-x86_64"]
   }
 
   filter {
@@ -35,7 +35,7 @@ data "aws_ami" "bastion_linux" {
 
   filter {
     name   = "name"
-    values = [local.distribution == "ubuntu" ? "ubuntu-minimal/images/hvm-ssd-gp3/ubuntu-${local.ubuntu_version}-${local.bastion_archi}-minimal-*" : "${local.amazonlinux_version}-ami-*-kernel-*-${local.bastion_archi}"]
+    values = [local.distribution == "ubuntu" ? "ubuntu-minimal/images/hvm-ssd-gp3/ubuntu-${local.ubuntu_version}-${local.bastion_archi}-minimal-*" : "${local.amazonlinux_version}-ami-*-kernel-*-x86_64"]
   }
 
   filter {
@@ -60,9 +60,7 @@ resource "aws_launch_template" "bastion" {
   user_data = base64encode(templatefile("${path.module}/${local.distribution}/user-data-bastion.sh",
                                         { eip_bastion_id = aws_eip.bastion.id,
                                           efs_dns_name   = aws_efs_file_system.efs.dns_name,
-                                          nfs_port       = local.nfs_port,
-                                          region         = var.region,
-                                          archi          = local.bastion_archi }))
+                                          region         = var.region }))
   instance_type = local.instance_type_bastion
   key_name      = aws_key_pair.deployer.key_name
 
@@ -112,12 +110,21 @@ resource "aws_launch_template" "kubernetes_master" {
                                         { linux_user        = local.linux_user,
                                           archi             = local.archi,
                                           nfs_port          = local.nfs_port,
-                                          worker_nb         = local.worker_min,
                                           efs_dns_name      = aws_efs_file_system.efs.dns_name,
                                           kube_api_external = aws_lb.external.dns_name,
                                           kube_api_internal = aws_lb.api_internal.dns_name }))
   instance_type = local.instance_type_master
   key_name      = aws_key_pair.deployer.key_name
+
+  block_device_mappings {
+    device_name = data.aws_ami.linux.root_device_name
+
+    ebs {
+      volume_size           = var.root_size_master
+      volume_type           = "gp2"
+      delete_on_termination = true
+    }
+  }
 
   network_interfaces {
     security_groups = [aws_security_group.kubernetes_master.id]
@@ -184,7 +191,6 @@ resource "aws_launch_template" "kubernetes_worker" {
   user_data = base64encode(templatefile("${path.module}/${local.distribution}/user-data-worker.sh",
                                         { archi             = local.archi,
                                           nfs_port          = local.nfs_port,
-                                          kube_api_internal = aws_lb.api_internal.dns_name,
                                           efs_dns_name      = aws_efs_file_system.efs.dns_name }))
   instance_type = local.instance_type_worker
   key_name      = aws_key_pair.deployer.key_name

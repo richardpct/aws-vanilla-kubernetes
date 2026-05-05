@@ -118,7 +118,6 @@ resource "helm_release" "rook-ceph-cluster" {
   depends_on = [helm_release.rook-ceph-operator]
 }
 
-
 resource "helm_release" "argo_cd" {
   name             = "argo-cd"
   repository       = "https://argoproj.github.io/argo-helm"
@@ -132,4 +131,19 @@ resource "helm_release" "argo_cd" {
   ]
 
   depends_on = [helm_release.rook-ceph-cluster]
+}
+
+resource "helm_release" "argocd_apps" {
+  name             = "argocd-apps"
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argocd-apps"
+  namespace        = "argocd"
+  create_namespace = true
+  force_update     = true
+
+  values = [
+    "${file("${path.module}/helm-values/argocd-apps.yaml")}"
+  ]
+
+  depends_on = [helm_release.argo_cd]
 }

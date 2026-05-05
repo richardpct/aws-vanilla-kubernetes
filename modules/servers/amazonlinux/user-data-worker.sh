@@ -34,9 +34,10 @@ EOF
 
 sysctl --system
 
-curl -L -O https://github.com/containerd/containerd/releases/download/v${containerd_vers}/containerd-${containerd_vers}-linux-${archi}.tar.gz
-tar Cxzvf /usr/local containerd-${containerd_vers}-linux-${archi}.tar.gz
-rm containerd-${containerd_vers}-linux-${archi}.tar.gz
+CONTAINERD_VERS=$(curl -s https://github.com/containerd/containerd | grep '/releases/tag/v' | sed -e 's/.*\(.[0-9]*\.[0-9]*\.[0-9]\).*/\1/')
+curl -L -O https://github.com/containerd/containerd/releases/download/v$CONTAINERD_VERS/containerd-$CONTAINERD_VERS-linux-${archi}.tar.gz
+tar Cxzvf /usr/local containerd-$CONTAINERD_VERS-linux-${archi}.tar.gz
+rm containerd-$CONTAINERD_VERS-linux-${archi}.tar.gz
 
 cat <<EOF | tee /lib/systemd/system/containerd.service
 [Unit]
@@ -68,7 +69,8 @@ mkdir /etc/containerd
 containerd config default > /etc/containerd/config.toml
 sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
 
-curl -L -O https://github.com/opencontainers/runc/releases/download/v${runc_vers}/runc.${archi}
+RUNC_VERS=$(curl -s https://github.com/opencontainers/runc | grep '/releases/tag/v' | sed -e 's/.*\(.[0-9]*\.[0-9]*\.[0-9]\).*/\1/')
+curl -L -O https://github.com/opencontainers/runc/releases/download/v$RUNC_VERS/runc.${archi}
 install -m 755 runc.${archi} /usr/local/sbin/runc
 rm runc.${archi}
 
@@ -76,39 +78,21 @@ systemctl daemon-reload
 systemctl start containerd
 systemctl enable containerd
 
+KUBE_VERS=$(curl -s https://github.com/kubernetes/kubernetes | grep '/releases/tag/v' | sed -e 's/.*\(.[0-9]*\.[0-9]*\)\..*/\1/')
+
 cat <<EOF | tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
-baseurl=https://pkgs.k8s.io/core:/stable:/v${kube_vers}/rpm/
+baseurl=https://pkgs.k8s.io/core:/stable:/v$KUBE_VERS/rpm/
 enabled=1
 gpgcheck=1
-gpgkey=https://pkgs.k8s.io/core:/stable:/v${kube_vers}/rpm/repodata/repomd.xml.key
+gpgkey=https://pkgs.k8s.io/core:/stable:/v$KUBE_VERS/rpm/repodata/repomd.xml.key
 exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
 EOF
 
 dnf update
 dnf install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
 systemctl enable kubelet
-
-mkdir /var/lib/longhorn
-longhorn_disk=''
-
-for disk in $(nvme list | awk '/nvme/{print $1}'); do
-  if ! blkid $disk > /dev/null 2>&1; then
-    longhorn_disk=$disk
-    break
-  fi
-done
-
-if [ $longhorn_disk == '' ]; then
-  echo 'No additional disk found'
-  exit 1
-fi
-
-mkfs.ext4 $longhorn_disk
-tune2fs -L "longhorn" $longhorn_disk
-echo 'LABEL=longhorn    /var/lib/longhorn    ext4    defaults    0 0' >> /etc/fstab
-mount /var/lib/longhorn
 
 mkdir /nfs
 
@@ -120,10 +104,12 @@ while [ ! -f /nfs/worker.sh ]; do
   sleep 10
 done
 
-/nfs/worker.sh
-touch /nfs/$NODENAME
+while ! /nfs/worker.sh; do
+  sleep 10
+done
+
 umount /nfs
 
 echo 'Done'
 
-shutdown -r now
+#shutdown -r now
