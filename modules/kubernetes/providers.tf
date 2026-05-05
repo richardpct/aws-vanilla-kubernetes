@@ -13,15 +13,15 @@ terraform {
 }
 
 provider "kubectl" {
-  config_path = "~/.kube/config-aws"
+  config_path = data.terraform_remote_state.servers.outputs.kube_config
 }
 
 provider "kubernetes" {
-  config_path = "~/.kube/config-aws"
+  config_path = data.terraform_remote_state.servers.outputs.kube_config
 }
 
 provider "helm" {
   kubernetes = {
-    config_path = "~/.kube/config-aws"
+    config_path = data.terraform_remote_state.servers.outputs.kube_config
   }
 }

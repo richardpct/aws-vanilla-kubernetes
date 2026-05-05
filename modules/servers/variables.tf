@@ -2,7 +2,6 @@ locals {
   distribution          = "ubuntu" // amazonlinux or ubuntu
   linux_user            = local.distribution == "ubuntu" ? "ubuntu" : "ec2-user"
   ubuntu_version        = "resolute-26.04"
-  #ubuntu_version        = "noble-24.04"
   amazonlinux_version   = "al2023"
   amazonlinux_owner_id  = "137112412989"
   ubuntu_owner_id       = "099720109477"
@@ -97,4 +96,9 @@ variable "rook_version" {
 variable "record_dns" {
   type        = list(string)
   description = "applications list"
+}
+
+variable "kube_config" {
+  type        = string
+  description = "kube config path"
 }

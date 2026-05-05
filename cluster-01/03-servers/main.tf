@@ -10,4 +10,5 @@ module "servers" {
   ssh_public_key              = var.ssh_public_key
   rook_version                = "1.19.5"
   record_dns                  = ["argocd", "grafana"]
+  kube_config                 = "~/.kube/config-aws"
 }
