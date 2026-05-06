@@ -6,9 +6,7 @@ module "servers" {
   network_remote_state_bucket = var.bucket
   network_remote_state_key    = var.key_network
   my_domain                   = var.my_domain
-  my_ip_address               = var.my_ip_address
   ssh_public_key              = var.ssh_public_key
   rook_version                = "1.19.5"
-  record_dns                  = ["argocd", "grafana"]
   kube_config                 = "~/.kube/config-aws"
 }

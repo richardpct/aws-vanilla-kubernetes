@@ -63,6 +63,14 @@ resource "aws_subnet" "public" {
   }
 }
 
+resource "aws_eip" "bastion" {
+  domain = "vpc"
+
+  tags = {
+    Name = "eip_bastion"
+  }
+}
+
 resource "aws_eip" "nat" {
   count  = length(var.subnet_public)
   domain = "vpc"

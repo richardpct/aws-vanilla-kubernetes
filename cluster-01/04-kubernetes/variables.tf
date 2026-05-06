@@ -15,17 +15,22 @@ variable "bucket" {
 
 variable "key_certificate" {
   type        = string
-  description = "Certificate key"
+  description = "bucket certificate key"
+}
+
+variable "key_network" {
+  type        = string
+  description = "bucket network key"
 }
 
 variable "key_kubernetes" {
   type        = string
-  description = "bucket key kubernetes"
+  description = "bucket kubernetes key"
 }
 
 variable "key_servers" {
   type        = string
-  description = "Servers key"
+  description = "servers key"
 }
 
 variable "my_domain" {

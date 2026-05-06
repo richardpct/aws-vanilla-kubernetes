@@ -1,6 +1,6 @@
 resource "aws_security_group" "bastion" {
   name   = "sg_bastion"
-  vpc_id = data.terraform_remote_state.network.outputs.vpc_id
+  vpc_id = aws_vpc.my_vpc.id
 
   ingress {
     from_port   = local.ssh_port
@@ -30,7 +30,7 @@ resource "aws_security_group" "bastion" {
 
 resource "aws_security_group" "kubernetes_master" {
   name   = "sg_kubernetes_master"
-  vpc_id = data.terraform_remote_state.network.outputs.vpc_id
+  vpc_id = aws_vpc.my_vpc.id
 
   ingress {
     from_port   = local.ssh_port
@@ -57,7 +57,7 @@ resource "aws_security_group" "kubernetes_master" {
     from_port   = local.kube_api_port
     to_port     = local.kube_api_port
     protocol    = "tcp"
-    cidr_blocks = [for nat_ip in data.terraform_remote_state.network.outputs.aws_eip_nat_ip : "${nat_ip}/32"]
+    cidr_blocks = [for nat_ip in aws_eip.nat[*].public_ip: "${nat_ip}/32"]
   }
 
   egress {
@@ -74,7 +74,7 @@ resource "aws_security_group" "kubernetes_master" {
 
 resource "aws_security_group" "efs" {
   name   = "sg_efs"
-  vpc_id = data.terraform_remote_state.network.outputs.vpc_id
+  vpc_id = aws_vpc.my_vpc.id
 
   egress {
     from_port   = 0
@@ -135,7 +135,7 @@ resource "aws_security_group_rule" "master_ingress_worker" {
 
 resource "aws_security_group" "kubernetes_worker" {
   name   = "sg_kubernetes_worker"
-  vpc_id = data.terraform_remote_state.network.outputs.vpc_id
+  vpc_id = aws_vpc.my_vpc.id
 
   egress {
     from_port   = 0
@@ -278,7 +278,7 @@ resource "aws_security_group_rule" "bastion_from_worker" {
 
 resource "aws_security_group" "lb_external" {
   name   = "sg_lb_external"
-  vpc_id = data.terraform_remote_state.network.outputs.vpc_id
+  vpc_id = aws_vpc.my_vpc.id
 
   ingress {
     from_port   = local.kube_api_port
@@ -298,7 +298,7 @@ resource "aws_security_group" "lb_external" {
     from_port   = local.https_port
     to_port     = local.https_port
     protocol    = "tcp"
-    cidr_blocks = [for nat_ip in data.terraform_remote_state.network.outputs.aws_eip_nat_ip : "${nat_ip}/32"]
+    cidr_blocks = [for nat_ip in aws_eip.nat[*].public_ip : "${nat_ip}/32"]
   }
 
   egress {
@@ -315,7 +315,7 @@ resource "aws_security_group" "lb_external" {
 
 resource "aws_security_group" "lb_api_internal" {
   name   = "sg_lb_api_internal"
-  vpc_id = data.terraform_remote_state.network.outputs.vpc_id
+  vpc_id = aws_vpc.my_vpc.id
 
   egress {
     from_port   = 0

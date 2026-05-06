@@ -30,31 +30,23 @@ data "aws_ami" "linux" {
   owners = [local.distribution == "ubuntu" ? local.ubuntu_owner_id : local.amazonlinux_owner_id]
 }
 
-resource "aws_eip" "bastion" {
-  domain = "vpc"
-
-  tags = {
-    Name = "eip_bastion"
-  }
-}
-
 resource "aws_launch_template" "bastion" {
   name      = "bastion"
   image_id  = data.aws_ami.linux.id
   user_data = base64encode(templatefile("${path.module}/${local.distribution}/user-data-bastion.sh",
-                                        { eip_bastion_id = aws_eip.bastion.id,
+                                        { eip_bastion_id = data.terraform_remote_state.network.outputs.aws_eip_bastion_id,
                                           efs_dns_name   = aws_efs_file_system.efs.dns_name,
                                           region         = var.region }))
   instance_type = local.instance_type_bastion
   key_name      = aws_key_pair.deployer.key_name
 
   network_interfaces {
-    security_groups             = [aws_security_group.bastion.id]
+    security_groups             = [data.terraform_remote_state.network.outputs.aws_security_group_bastion_id]
     associate_public_ip_address = true
   }
 
   iam_instance_profile {
-    name = aws_iam_instance_profile.profile.name
+    name = data.terraform_remote_state.network.outputs.aws_iam_instance_profile_name
   }
 
   instance_market_options {
@@ -95,8 +87,8 @@ resource "aws_launch_template" "kubernetes_master" {
                                           archi             = local.archi,
                                           nfs_port          = local.nfs_port,
                                           efs_dns_name      = aws_efs_file_system.efs.dns_name,
-                                          kube_api_external = aws_lb.external.dns_name,
-                                          kube_api_internal = aws_lb.api_internal.dns_name }))
+                                          kube_api_external = data.terraform_remote_state.network.outputs.aws_lb_external_dns_name,
+                                          kube_api_internal = data.terraform_remote_state.network.outputs.aws_lb_api_internal_dns_name }))
   instance_type = local.instance_type_master
   key_name      = aws_key_pair.deployer.key_name
 
@@ -111,7 +103,7 @@ resource "aws_launch_template" "kubernetes_master" {
   }
 
   network_interfaces {
-    security_groups = [aws_security_group.kubernetes_master.id]
+    security_groups = [data.terraform_remote_state.network.outputs.aws_security_group_kubernetes_master_id]
   }
 
   instance_market_options {
@@ -130,7 +122,8 @@ resource "aws_launch_template" "kubernetes_master" {
 resource "aws_autoscaling_group" "kubernetes_master" {
   name                = "Kubernetes master"
   vpc_zone_identifier = data.terraform_remote_state.network.outputs.subnet_private[*]
-  target_group_arns   = [aws_lb_target_group.api.arn, aws_lb_target_group.api_internal.arn]
+  target_group_arns   = [data.terraform_remote_state.network.outputs.aws_lb_target_group_api_arn,
+                         data.terraform_remote_state.network.outputs.aws_lb_target_group_api_internal_arn]
   min_size            = local.master_min
   max_size            = local.master_max
 
@@ -148,11 +141,11 @@ resource "aws_autoscaling_group" "kubernetes_master" {
 resource "null_resource" "get_kube_config" {
   provisioner "local-exec" {
     command = <<EOF
-while ! nc -w1 ${aws_eip.bastion.public_ip} ${local.ssh_port}; do sleep 10; done
-ssh -o StrictHostKeyChecking=accept-new ${local.linux_user}@${aws_eip.bastion.public_ip} 'until [ -f /nfs/config ]; do sleep 10; done'
+while ! nc -w1 ${data.terraform_remote_state.network.outputs.aws_eip_bastion_ip} ${local.ssh_port}; do sleep 10; done
+ssh -o StrictHostKeyChecking=accept-new ${local.linux_user}@${data.terraform_remote_state.network.outputs.aws_eip_bastion_ip} 'until [ -f /nfs/config ]; do sleep 10; done'
 [ -d ~/.kube ] || mkdir ~/.kube
-ssh ${local.linux_user}@${aws_eip.bastion.public_ip} 'sed -e "s;https://.*:6443;https://${aws_lb.external.dns_name}:6443;" /nfs/config' > ~/.kube/config-aws
-ssh ${local.linux_user}@${aws_eip.bastion.public_ip} 'sudo umount /nfs'
+ssh ${local.linux_user}@${data.terraform_remote_state.network.outputs.aws_eip_bastion_ip} 'sed -e "s;https://.*:6443;https://${data.terraform_remote_state.network.outputs.aws_lb_external_dns_name}:6443;" /nfs/config' > ~/.kube/config-aws
+ssh ${local.linux_user}@${data.terraform_remote_state.network.outputs.aws_eip_bastion_ip} 'sudo umount /nfs'
 chmod 600 ~/.kube/config-aws
     EOF
   }
@@ -200,7 +193,7 @@ resource "aws_launch_template" "kubernetes_worker" {
   }
 
   network_interfaces {
-    security_groups = [aws_security_group.kubernetes_worker.id]
+    security_groups = [data.terraform_remote_state.network.outputs.aws_security_group_kubernetes_worker_id]
   }
 
   instance_market_options {
@@ -219,7 +212,7 @@ resource "aws_launch_template" "kubernetes_worker" {
 resource "aws_autoscaling_group" "kubernetes_worker" {
   name                 = "Kubernetes worker"
   vpc_zone_identifier  = data.terraform_remote_state.network.outputs.subnet_private[*]
-  target_group_arns    = [aws_lb_target_group.https.arn]
+  target_group_arns    = [data.terraform_remote_state.network.outputs.aws_lb_target_group_https_arn]
   min_size             = local.worker_min
   max_size             = local.worker_max
 

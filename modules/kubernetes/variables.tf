@@ -27,6 +27,16 @@ variable "certificate_remote_state_key" {
   description = "bucket key certificate"
 }
 
+variable "network_remote_state_bucket" {
+  type        = string
+  description = "bucket"
+}
+
+variable "network_remote_state_key" {
+  type        = string
+  description = "bucket key network"
+}
+
 variable "servers_remote_state_bucket" {
   type        = string
   description = "bucket"

@@ -14,6 +14,54 @@ output "subnet_private_efs" {
   value = aws_subnet.private_efs[*].id
 }
 
+output "aws_lb_external_dns_name" {
+  value = aws_lb.external.dns_name
+}
+
+output "aws_lb_api_internal_dns_name" {
+  value = aws_lb.api_internal.dns_name
+}
+
+output "aws_lb_target_group_api_arn" {
+  value = aws_lb_target_group.api.arn
+}
+
+output "aws_lb_target_group_api_internal_arn" {
+  value = aws_lb_target_group.api_internal.arn
+}
+
+output "aws_lb_target_group_https_arn" {
+  value = aws_lb_target_group.https.arn
+}
+
+output "aws_iam_instance_profile_name" {
+  value = aws_iam_instance_profile.profile.name
+}
+
+output "aws_security_group_efs_id" {
+  value = aws_security_group.efs.id
+}
+
+output "aws_security_group_bastion_id" {
+  value = aws_security_group.bastion.id
+}
+
+output "aws_security_group_kubernetes_master_id" {
+  value = aws_security_group.kubernetes_master.id
+}
+
+output "aws_security_group_kubernetes_worker_id" {
+  value = aws_security_group.kubernetes_worker.id
+}
+
+output "aws_eip_bastion_id" {
+  value = aws_eip.bastion.id
+}
+
+output "aws_eip_bastion_ip" {
+  value = aws_eip.bastion.public_ip
+}
+
 output "aws_eip_nat_ip" {
   value = aws_eip.nat[*].public_ip
 }

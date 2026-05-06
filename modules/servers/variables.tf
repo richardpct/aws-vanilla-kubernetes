@@ -8,14 +8,7 @@ locals {
   archi                 = "amd64" // amd64 or arm64
   amazonlinux_archi     = local.archi == "amd64" ? "x86_64" : "arm64"
   ssh_port              = 22
-  http_port             = 80
-  https_port            = 443
   nfs_port              = 2049
-  kube_api_port         = 6443
-  hubble_port           = 4245
-  nodeport_http         = 30080
-  nodeport_https        = 30443
-  anywhere              = ["0.0.0.0/0"]
   instance_type_bastion = local.archi == "arm64" ? "t4g.nano" : "t3.nano"
   bastion_price         = local.archi == "arm64" ? "0.0025" : "0.001"
   bastion_min           = 1
@@ -60,11 +53,6 @@ variable "my_domain" {
   description = "my domain name"
 }
 
-variable "my_ip_address" {
-  type        = string
-  description = "my ip address"
-}
-
 variable "ssh_public_key" {
   type        = string
   description = "ssh public key"
@@ -91,11 +79,6 @@ variable "add_disk_size_worker" {
 variable "rook_version" {
   type        = string
   description = "rook version"
-}
-
-variable "record_dns" {
-  type        = list(string)
-  description = "applications list"
 }
 
 variable "kube_config" {

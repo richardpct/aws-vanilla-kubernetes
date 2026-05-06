@@ -9,6 +9,17 @@ data "terraform_remote_state" "certificate" {
   }
 }
 
+data "terraform_remote_state" "network" {
+  backend = "s3"
+
+  config = {
+    profile = var.aws_profile
+    bucket  = var.network_remote_state_bucket
+    key     = var.network_remote_state_key
+    region  = var.region
+  }
+}
+
 data "terraform_remote_state" "servers" {
   backend = "s3"
 
@@ -72,7 +83,7 @@ resource "helm_release" "cilium" {
   set = [
     {
       name  = "k8sServiceHost"
-      value = data.terraform_remote_state.servers.outputs.kubernetes_api_internal
+      value = data.terraform_remote_state.network.outputs.aws_lb_api_internal_dns_name
     }
   ]
 

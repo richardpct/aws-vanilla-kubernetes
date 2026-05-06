@@ -28,11 +28,6 @@ variable "my_domain" {
   description = "my domain name"
 }
 
-variable "my_ip_address" {
-  type        = string
-  description = "my ip address"
-}
-
 variable "ssh_public_key" {
   type        = string
   description = "ssh public key"

@@ -17,3 +17,13 @@ variable "key_network" {
   type        = string
   description = "bucket key network"
 }
+
+variable "my_domain" {
+  type        = string
+  description = "my domain name"
+}
+
+variable "my_ip_address" {
+  type        = string
+  description = "my ip address"
+}
