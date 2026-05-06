@@ -19,23 +19,7 @@ data "aws_ami" "linux" {
 
   filter {
     name   = "name"
-    values = [local.distribution == "ubuntu" ? "ubuntu-minimal/images/hvm-ssd-gp3/ubuntu-${local.ubuntu_version}-${local.archi}-minimal-*" : "${local.amazonlinux_version}-ami-*-kernel-*-x86_64"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  owners = [local.distribution == "ubuntu" ? local.ubuntu_owner_id : local.amazonlinux_owner_id]
-}
-
-data "aws_ami" "bastion_linux" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = [local.distribution == "ubuntu" ? "ubuntu-minimal/images/hvm-ssd-gp3/ubuntu-${local.ubuntu_version}-${local.bastion_archi}-minimal-*" : "${local.amazonlinux_version}-ami-*-kernel-*-x86_64"]
+    values = [local.distribution == "ubuntu" ? "ubuntu-minimal/images/hvm-ssd-gp3/ubuntu-${local.ubuntu_version}-${local.archi}-minimal-*" : "${local.amazonlinux_version}-ami-*-kernel-*-${local.amazonlinux_archi}"]
   }
 
   filter {
@@ -56,7 +40,7 @@ resource "aws_eip" "bastion" {
 
 resource "aws_launch_template" "bastion" {
   name      = "bastion"
-  image_id  = data.aws_ami.bastion_linux.id
+  image_id  = data.aws_ami.linux.id
   user_data = base64encode(templatefile("${path.module}/${local.distribution}/user-data-bastion.sh",
                                         { eip_bastion_id = aws_eip.bastion.id,
                                           efs_dns_name   = aws_efs_file_system.efs.dns_name,

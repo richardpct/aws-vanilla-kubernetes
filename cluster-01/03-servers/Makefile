@@ -31,7 +31,7 @@ plan: init ## Dry run
 .PHONY: destroy
 destroy: ## Destroy the infrastructure
 	. $(SECRET_ENV) && \
-	tofu destroy
+	make destroy -C ../04-kubernetes && tofu destroy
 
 .PHONY: clean
 clean: ## Clean

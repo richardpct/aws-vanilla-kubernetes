@@ -141,6 +141,8 @@ echo 'source /usr/share/bash-completion/bash_completion' >> /root/.bashrc
 kubectl completion bash | tee /etc/bash_completion.d/kubectl > /dev/null
 echo 'complete -o default -F __start_kubectl k' >> /root/.bashrc
 
+umount /nfs
+
 echo 'Done'
 
 #shutdown -r now

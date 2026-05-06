@@ -6,7 +6,7 @@ locals {
   amazonlinux_owner_id  = "137112412989"
   ubuntu_owner_id       = "099720109477"
   archi                 = "amd64" // amd64 or arm64
-  bastion_archi         = "amd64" // amd64 or arm64
+  amazonlinux_archi     = local.archi == "amd64" ? "x86_64" : "arm64"
   ssh_port              = 22
   http_port             = 80
   https_port            = 443
@@ -16,7 +16,7 @@ locals {
   nodeport_http         = 30080
   nodeport_https        = 30443
   anywhere              = ["0.0.0.0/0"]
-  instance_type_bastion = local.bastion_archi == "arm64" ? "t4g.nano" : "t3.nano"
+  instance_type_bastion = local.archi == "arm64" ? "t4g.nano" : "t3.nano"
   bastion_price         = local.archi == "arm64" ? "0.0025" : "0.001"
   bastion_min           = 1
   bastion_max           = 1
@@ -73,7 +73,7 @@ variable "ssh_public_key" {
 variable "root_size_master" {
   type        = number
   description = "master instance root size"
-  default     = 12
+  default     = 4
 }
 
 variable "root_size_worker" {

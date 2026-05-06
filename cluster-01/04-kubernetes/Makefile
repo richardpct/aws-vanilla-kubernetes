@@ -33,7 +33,7 @@ destroy: ## Destroy the infrastructure
 	. $(SECRET_ENV) && \
 	tofu state ls | while read; do tofu state rm $$REPLY; done
 	. $(SECRET_ENV) && \
-	tofu destroy && make destroy -C ../03-servers
+	tofu destroy
 
 .PHONY: clean
 clean: ## Clean
