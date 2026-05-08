@@ -61,7 +61,7 @@ variable "ssh_public_key" {
 variable "root_size_master" {
   type        = number
   description = "master instance root size"
-  default     = 4
+  default     = 8
 }
 
 variable "root_size_worker" {
