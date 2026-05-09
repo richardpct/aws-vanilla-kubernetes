@@ -5,9 +5,6 @@ configs:
   params:
     server.insecure: true
 
-  secret:
-    argocdServerAdminPassword: "$2a$10$8.jKSk/J.yLXqFQUSGG6dO8nDvx2jtXBHrD/IYqOjG.Fy.HWoKUU."
-
 ## Repo Server
 repoServer:
   # -- Repo server name
@@ -35,7 +32,7 @@ repoServer:
     # -- Configures the scaling behavior of the target in both Up and Down directions.
 
 server:
-  replicas: 3
+  replicas: 2
   ingress:
     enabled: false
   httproute:

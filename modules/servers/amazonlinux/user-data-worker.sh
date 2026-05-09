@@ -13,10 +13,7 @@ hostnamectl set-hostname $NODENAME
 setenforce 0
 sed -i 's/^SELINUX=.*/SELINUX=disabled/' /etc/selinux/config
 
-dnf install -y \
-  nfsv4-client-utils \
-  nvme-cli \
-  iscsi-initiator-utils
+dnf install -y nfsv4-client-utils
 
 cat <<EOF | tee /etc/modules-load.d/k8s.conf
 overlay

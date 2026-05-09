@@ -13,9 +13,7 @@ hostnamectl set-hostname $NODENAME
 setenforce 0
 sed -i 's/^SELINUX=.*/SELINUX=disabled/' /etc/selinux/config
 
-dnf install -y \
-  nfsv4-client-utils \
-  iscsi-initiator-utils
+dnf install -y nfsv4-client-utils
 
 cat <<EOF | tee /etc/modules-load.d/k8s.conf
 overlay
@@ -133,13 +131,6 @@ cp /etc/kubernetes/admin.conf /root/.kube/config
 mkdir /home/${linux_user}/.kube
 install -m 600 /etc/kubernetes/admin.conf /home/${linux_user}/.kube/config
 chown -R ${linux_user}:${linux_user} /home/${linux_user}/.kube
-echo 'alias k=kubectl' >> /root/.bash_aliases
-echo 'alias k=kubectl' >> /home/${linux_user}/.bash_aliases
-chown ${linux_user}:${linux_user} /home/${linux_user}/.bash_aliases
-echo 'source /usr/share/bash-completion/bash_completion' >> /root/.bashrc
-[ -d /etc/bash_completion.d ] || mkdir /etc/bash_completion.d
-kubectl completion bash | tee /etc/bash_completion.d/kubectl > /dev/null
-echo 'complete -o default -F __start_kubectl k' >> /root/.bashrc
 
 umount /nfs
 
