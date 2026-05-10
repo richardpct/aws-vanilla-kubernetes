@@ -5,7 +5,6 @@ locals {
   nfs_port       = 2049
   http_port      = 80
   https_port     = 443
-  hubble_port    = 4245
   anywhere       = ["0.0.0.0/0"]
 }
 
