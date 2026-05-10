@@ -85,7 +85,6 @@ resource "aws_launch_template" "kubernetes_master" {
   user_data = base64encode(templatefile("${path.module}/${local.distribution}/user-data-master.sh",
                                         { linux_user        = local.linux_user,
                                           archi             = local.archi,
-                                          nfs_port          = local.nfs_port,
                                           efs_dns_name      = aws_efs_file_system.efs.dns_name,
                                           kube_api_external = data.terraform_remote_state.network.outputs.aws_lb_external_dns_name,
                                           kube_api_internal = data.terraform_remote_state.network.outputs.aws_lb_internal_dns_name }))
@@ -167,7 +166,6 @@ resource "aws_launch_template" "kubernetes_worker" {
   image_id  = data.aws_ami.linux.id
   user_data = base64encode(templatefile("${path.module}/${local.distribution}/user-data-worker.sh",
                                         { archi             = local.archi,
-                                          nfs_port          = local.nfs_port,
                                           efs_dns_name      = aws_efs_file_system.efs.dns_name }))
   instance_type = local.instance_type_worker
   key_name      = aws_key_pair.my_key.key_name

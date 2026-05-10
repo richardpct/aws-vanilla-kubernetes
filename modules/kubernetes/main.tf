@@ -141,6 +141,17 @@ resource "helm_release" "argo_cd" {
     "${file("${path.module}/helm-values/argocd.yaml")}"
   ]
 
+  set = [
+    {
+      name  = "global.domain"
+      value = "argocd.${var.my_domain}"
+    },
+    {
+      name  = "server.httproute.hostnames[0]"
+      value = "argocd.${var.my_domain}"
+    }
+  ]
+
   depends_on = [helm_release.rook-ceph-cluster]
 }
 

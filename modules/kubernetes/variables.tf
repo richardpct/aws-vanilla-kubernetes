@@ -17,6 +17,11 @@ variable "env" {
   description = "environment"
 }
 
+variable "my_domain" {
+  type        = string
+  description = "my domain name"
+}
+
 variable "certificate_remote_state_bucket" {
   type        = string
   description = "bucket"

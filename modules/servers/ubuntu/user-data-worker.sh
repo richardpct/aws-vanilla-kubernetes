@@ -161,10 +161,6 @@ function install_kube_tools() {
 function join_node() {
   mkdir /nfs
 
-  while ! nc -w1 ${efs_dns_name} ${nfs_port}; do
-    sleep 30
-  done
-
   while ! mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${efs_dns_name}:/ /nfs; do
     sleep 10
   done
