@@ -17,19 +17,6 @@ resource "aws_internet_gateway" "my_igw" {
   }
 }
 
-resource "aws_default_route_table" "route" {
-  default_route_table_id = aws_vpc.my_vpc.default_route_table_id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.my_igw.id
-  }
-
-  tags = {
-    Name = "default route"
-  }
-}
-
 resource "aws_subnet" "private" {
   count             = length(var.subnet_private)
   vpc_id            = aws_vpc.my_vpc.id
@@ -90,7 +77,7 @@ resource "aws_nat_gateway" "nat_gw" {
   }
 }
 
-resource "aws_route_table" "route" {
+resource "aws_route_table" "route_internet" {
   vpc_id = aws_vpc.my_vpc.id
 
   route {
@@ -99,7 +86,7 @@ resource "aws_route_table" "route" {
   }
 
   tags = {
-    Name = "custom_route"
+    Name = "route_internet"
   }
 }
 
@@ -113,7 +100,7 @@ resource "aws_route_table" "route_nat" {
   }
 
   tags = {
-    Name = "default_route_nat_${count.index}"
+    Name = "route_nat_${count.index}"
   }
 }
 
@@ -126,5 +113,5 @@ resource "aws_route_table_association" "private" {
 resource "aws_route_table_association" "public" {
   count          = length(var.subnet_public)
   subnet_id      = aws_subnet.public[count.index].id
-  route_table_id = aws_route_table.route.id
+  route_table_id = aws_route_table.route_internet.id
 }

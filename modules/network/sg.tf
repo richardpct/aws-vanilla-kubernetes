@@ -4,7 +4,7 @@ resource "aws_security_group" "bastion" {
   vpc_id = aws_vpc.my_vpc.id
 
   tags = {
-    Name = "bastion"
+    Name = "sg_bastion"
   }
 }
 
@@ -68,7 +68,7 @@ resource "aws_security_group" "kubernetes_master" {
   vpc_id = aws_vpc.my_vpc.id
 
   tags = {
-    Name = "Kubernetes master sg"
+    Name = "sg_kubernetes_master"
   }
 }
 
@@ -108,12 +108,12 @@ resource "aws_security_group_rule" "master_from_lb_external_api" {
   security_group_id        = aws_security_group.kubernetes_master.id
 }
 
-resource "aws_security_group_rule" "master_from_lb_api_internal_api" {
+resource "aws_security_group_rule" "master_from_lb_internal_api" {
   type                     = "ingress"
   from_port                = local.kube_api_port
   to_port                  = local.kube_api_port
   protocol                 = "tcp"
-  source_security_group_id = aws_security_group.lb_api_internal.id
+  source_security_group_id = aws_security_group.lb_internal.id
   security_group_id        = aws_security_group.kubernetes_master.id
 }
 
@@ -132,7 +132,7 @@ resource "aws_security_group" "kubernetes_worker" {
   vpc_id = aws_vpc.my_vpc.id
 
   tags = {
-    Name = "Kubernetes worker sg"
+    Name = "sg_kubernetes_worker"
   }
 }
 
@@ -163,12 +163,12 @@ resource "aws_security_group_rule" "worker_from_worker" {
   security_group_id        = aws_security_group.kubernetes_worker.id
 }
 
-resource "aws_security_group_rule" "worker_from_lb_api_internal_api" {
+resource "aws_security_group_rule" "worker_from_lb_internal_api" {
   type                     = "ingress"
   from_port                = local.kube_api_port
   to_port                  = local.kube_api_port
   protocol                 = "tcp"
-  source_security_group_id = aws_security_group.lb_api_internal.id
+  source_security_group_id = aws_security_group.lb_internal.id
   security_group_id        = aws_security_group.kubernetes_worker.id
 }
 
@@ -196,7 +196,7 @@ resource "aws_security_group" "efs" {
   vpc_id = aws_vpc.my_vpc.id
 
   tags = {
-    Name = "efs_sg"
+    Name = "sg_efs"
   }
 }
 
@@ -233,7 +233,7 @@ resource "aws_security_group" "lb_external" {
   vpc_id = aws_vpc.my_vpc.id
 
   tags = {
-    Name = "lb_external_sg"
+    Name = "sg_lb_external"
   }
 }
 
@@ -264,32 +264,32 @@ resource "aws_security_group_rule" "lb_external_to_any_all" {
   security_group_id = aws_security_group.lb_external.id
 }
 
-# lb api internal
-resource "aws_security_group" "lb_api_internal" {
-  name   = "sg_lb_api_internal"
+# lb internal
+resource "aws_security_group" "lb_internal" {
+  name   = "sg_lb_internal"
   vpc_id = aws_vpc.my_vpc.id
 
   tags = {
-    Name = "lb_api_sg_internal"
+    Name = "sg_lb_internal"
   }
 }
 
-resource "aws_security_group_rule" "lb_api_internal_from_master_api" {
+resource "aws_security_group_rule" "lb_internal_from_master_api" {
   type                     = "ingress"
   from_port                = local.kube_api_port
   to_port                  = local.kube_api_port
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.kubernetes_master.id
-  security_group_id        = aws_security_group.lb_api_internal.id
+  security_group_id        = aws_security_group.lb_internal.id
 }
 
-resource "aws_security_group_rule" "lb_api_internal_from_worker_api" {
+resource "aws_security_group_rule" "lb_internal_from_worker_api" {
   type                     = "ingress"
   from_port                = local.kube_api_port
   to_port                  = local.kube_api_port
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.kubernetes_worker.id
-  security_group_id        = aws_security_group.lb_api_internal.id
+  security_group_id        = aws_security_group.lb_internal.id
 }
 
 resource "aws_security_group_rule" "lb_internal_to_any_all" {
@@ -298,5 +298,5 @@ resource "aws_security_group_rule" "lb_internal_to_any_all" {
   to_port           = 0
   protocol          = "-1"
   cidr_blocks       = local.anywhere
-  security_group_id = aws_security_group.lb_api_internal.id
+  security_group_id = aws_security_group.lb_internal.id
 }

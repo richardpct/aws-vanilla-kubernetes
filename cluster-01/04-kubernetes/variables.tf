@@ -30,7 +30,7 @@ variable "key_kubernetes" {
 
 variable "key_servers" {
   type        = string
-  description = "servers key"
+  description = "bucket servers key"
 }
 
 variable "my_domain" {

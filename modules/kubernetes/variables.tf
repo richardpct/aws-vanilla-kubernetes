@@ -1,5 +1,5 @@
 locals {
-  nodeport_http = 30080
+  nodeport_https = 30443
 }
 
 variable "aws_profile" {
@@ -9,7 +9,7 @@ variable "aws_profile" {
 
 variable "region" {
   type        = string
-  description = "Region"
+  description = "region"
 }
 
 variable "env" {

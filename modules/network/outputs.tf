@@ -18,20 +18,20 @@ output "aws_lb_external_dns_name" {
   value = aws_lb.external.dns_name
 }
 
-output "aws_lb_api_internal_dns_name" {
-  value = aws_lb.api_internal.dns_name
+output "aws_lb_internal_dns_name" {
+  value = aws_lb.internal.dns_name
 }
 
-output "aws_lb_target_group_api_arn" {
-  value = aws_lb_target_group.api.arn
+output "aws_lb_target_group_external_api_arn" {
+  value = aws_lb_target_group.external_api.arn
 }
 
-output "aws_lb_target_group_api_internal_arn" {
-  value = aws_lb_target_group.api_internal.arn
+output "aws_lb_target_group_internal_api_arn" {
+  value = aws_lb_target_group.internal_api.arn
 }
 
-output "aws_lb_target_group_https_arn" {
-  value = aws_lb_target_group.https.arn
+output "aws_lb_target_group_external_https_arn" {
+  value = aws_lb_target_group.external_https.arn
 }
 
 output "aws_iam_instance_profile_name" {

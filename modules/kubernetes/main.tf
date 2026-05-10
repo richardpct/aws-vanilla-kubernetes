@@ -62,7 +62,7 @@ resource "null_resource" "install-gateway-crds" {
 resource "kubectl_manifest" "gateway" {
   yaml_body = templatefile("${path.module}/manifests/gateway.yaml.tftpl",
     {
-      gateway_nodeport = "30443"
+      gateway_nodeport = local.nodeport_https
     }
   )
 
@@ -83,7 +83,7 @@ resource "helm_release" "cilium" {
   set = [
     {
       name  = "k8sServiceHost"
-      value = data.terraform_remote_state.network.outputs.aws_lb_api_internal_dns_name
+      value = data.terraform_remote_state.network.outputs.aws_lb_internal_dns_name
     }
   ]
 

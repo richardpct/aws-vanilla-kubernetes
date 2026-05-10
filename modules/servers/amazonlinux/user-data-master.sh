@@ -88,7 +88,11 @@ exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
 EOF
 
 dnf update
-dnf install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+dnf install -y \
+  --disableexcludes=kubernetes \
+  kubelet \
+  kubeadm \
+  kubectl
 systemctl enable kubelet
 
 mkdir /nfs

@@ -72,7 +72,7 @@ variable "root_size_worker" {
 
 variable "add_disk_size_worker" {
   type        = number
-  description = "worker instance additional disk size"
+  description = "worker instance additional disk size for rook ceph"
   default     = 15
 }
 

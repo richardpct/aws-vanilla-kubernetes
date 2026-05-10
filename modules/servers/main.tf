@@ -9,8 +9,8 @@ data "terraform_remote_state" "network" {
   }
 }
 
-resource "aws_key_pair" "deployer" {
-  key_name   = "deployer-key"
+resource "aws_key_pair" "my_key" {
+  key_name   = "my_key"
   public_key = var.ssh_public_key
 }
 
@@ -38,7 +38,7 @@ resource "aws_launch_template" "bastion" {
                                           efs_dns_name   = aws_efs_file_system.efs.dns_name,
                                           region         = var.region }))
   instance_type = local.instance_type_bastion
-  key_name      = aws_key_pair.deployer.key_name
+  key_name      = aws_key_pair.my_key.key_name
 
   network_interfaces {
     security_groups             = [data.terraform_remote_state.network.outputs.aws_security_group_bastion_id]
@@ -63,7 +63,7 @@ resource "aws_launch_template" "bastion" {
 }
 
 resource "aws_autoscaling_group" "bastion" {
-  name                 = "asg_bastion"
+  name                 = "bastion"
   vpc_zone_identifier  = data.terraform_remote_state.network.outputs.subnet_public[*]
   min_size             = local.bastion_min
   max_size             = local.bastion_max
@@ -80,7 +80,7 @@ resource "aws_autoscaling_group" "bastion" {
 }
 
 resource "aws_launch_template" "kubernetes_master" {
-  name      = "Kubernetes_master"
+  name      = "kubernetes_master"
   image_id  = data.aws_ami.linux.id
   user_data = base64encode(templatefile("${path.module}/${local.distribution}/user-data-master.sh",
                                         { linux_user        = local.linux_user,
@@ -88,9 +88,9 @@ resource "aws_launch_template" "kubernetes_master" {
                                           nfs_port          = local.nfs_port,
                                           efs_dns_name      = aws_efs_file_system.efs.dns_name,
                                           kube_api_external = data.terraform_remote_state.network.outputs.aws_lb_external_dns_name,
-                                          kube_api_internal = data.terraform_remote_state.network.outputs.aws_lb_api_internal_dns_name }))
+                                          kube_api_internal = data.terraform_remote_state.network.outputs.aws_lb_internal_dns_name }))
   instance_type = local.instance_type_master
-  key_name      = aws_key_pair.deployer.key_name
+  key_name      = aws_key_pair.my_key.key_name
 
   block_device_mappings {
     device_name = data.aws_ami.linux.root_device_name
@@ -120,10 +120,10 @@ resource "aws_launch_template" "kubernetes_master" {
 }
 
 resource "aws_autoscaling_group" "kubernetes_master" {
-  name                = "Kubernetes master"
+  name                = "kubernetes_master"
   vpc_zone_identifier = data.terraform_remote_state.network.outputs.subnet_private[*]
-  target_group_arns   = [data.terraform_remote_state.network.outputs.aws_lb_target_group_api_arn,
-                         data.terraform_remote_state.network.outputs.aws_lb_target_group_api_internal_arn]
+  target_group_arns   = [data.terraform_remote_state.network.outputs.aws_lb_target_group_external_api_arn,
+                         data.terraform_remote_state.network.outputs.aws_lb_target_group_internal_api_arn]
   min_size            = local.master_min
   max_size            = local.master_max
 
@@ -170,7 +170,7 @@ resource "aws_launch_template" "kubernetes_worker" {
                                           nfs_port          = local.nfs_port,
                                           efs_dns_name      = aws_efs_file_system.efs.dns_name }))
   instance_type = local.instance_type_worker
-  key_name      = aws_key_pair.deployer.key_name
+  key_name      = aws_key_pair.my_key.key_name
 
   block_device_mappings {
     device_name = data.aws_ami.linux.root_device_name
@@ -210,9 +210,9 @@ resource "aws_launch_template" "kubernetes_worker" {
 }
 
 resource "aws_autoscaling_group" "kubernetes_worker" {
-  name                 = "Kubernetes worker"
+  name                 = "kubernetes_worker"
   vpc_zone_identifier  = data.terraform_remote_state.network.outputs.subnet_private[*]
-  target_group_arns    = [data.terraform_remote_state.network.outputs.aws_lb_target_group_https_arn]
+  target_group_arns    = [data.terraform_remote_state.network.outputs.aws_lb_target_group_external_https_arn]
   min_size             = local.worker_min
   max_size             = local.worker_max
 
@@ -227,7 +227,7 @@ resource "aws_autoscaling_group" "kubernetes_worker" {
   }
 }
 
-resource "null_resource" "get_rook-ceph-operator-values" {
+resource "null_resource" "get_rook_ceph_operator_values" {
   provisioner "local-exec" {
     command = <<EOF
 curl -s -o /tmp/rook-ceph-operator-values.yaml https://raw.githubusercontent.com/rook/rook/refs/tags/v${var.rook_version}/deploy/charts/rook-ceph/values.yaml
@@ -237,7 +237,7 @@ sed -i -e 's/memory:.*/memory:/' /tmp/rook-ceph-operator-values.yaml
   }
 }
 
-resource "null_resource" "get_rook-ceph-cluster-values" {
+resource "null_resource" "get_rook_ceph_cluster_values" {
   provisioner "local-exec" {
     command = <<EOF
 curl -s -o /tmp/rook-ceph-cluster-values.yaml https://raw.githubusercontent.com/rook/rook/refs/tags/v${var.rook_version}/deploy/charts/rook-ceph-cluster/values.yaml
