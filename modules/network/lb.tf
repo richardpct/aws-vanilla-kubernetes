@@ -26,7 +26,7 @@ resource "aws_lb_listener" "external_api" {
 
 resource "aws_lb_target_group" "external_https" {
   name     = "lb-target-group-external-https"
-  port     = local.nodeport_https
+  port     = local.gateway_port
   protocol = "TCP"
   vpc_id   = aws_vpc.my_vpc.id
 }

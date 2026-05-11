@@ -62,7 +62,7 @@ resource "null_resource" "install-gateway-crds" {
 resource "kubectl_manifest" "gateway" {
   yaml_body = templatefile("${path.module}/manifests/gateway.yaml.tftpl",
     {
-      gateway_nodeport = local.nodeport_https
+      gateway_port = local.gateway_port
     }
   )
 

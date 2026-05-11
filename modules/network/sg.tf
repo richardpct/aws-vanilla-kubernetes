@@ -172,10 +172,10 @@ resource "aws_security_group_rule" "worker_from_lb_internal_api" {
   security_group_id        = aws_security_group.kubernetes_worker.id
 }
 
-resource "aws_security_group_rule" "worker_from_lb_external_nodeport" {
+resource "aws_security_group_rule" "worker_from_lb_external_gateway" {
   type                     = "ingress"
-  from_port                = local.nodeport_https
-  to_port                  = local.nodeport_https
+  from_port                = local.gateway_port
+  to_port                  = local.gateway_port
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.lb_external.id
   security_group_id        = aws_security_group.kubernetes_worker.id

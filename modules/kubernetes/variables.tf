@@ -1,5 +1,5 @@
 locals {
-  nodeport_https = 30443
+  gateway_port = 30443
 }
 
 variable "aws_profile" {

@@ -1,11 +1,11 @@
 locals {
-  kube_api_port  = 6443
-  nodeport_https = 30443
-  ssh_port       = 22
-  nfs_port       = 2049
-  http_port      = 80
-  https_port     = 443
-  anywhere       = ["0.0.0.0/0"]
+  kube_api_port = 6443
+  gateway_port  = 30443
+  ssh_port      = 22
+  nfs_port      = 2049
+  http_port     = 80
+  https_port    = 443
+  anywhere      = ["0.0.0.0/0"]
 }
 
 variable "aws_profile" {
