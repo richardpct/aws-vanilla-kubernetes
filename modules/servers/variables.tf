@@ -1,4 +1,5 @@
 locals {
+  ssh_port              = 22
   distribution          = "amazonlinux" // amazonlinux or ubuntu
   linux_user            = local.distribution == "ubuntu" ? "ubuntu" : "ec2-user"
   ubuntu_version        = "resolute-26.04"
@@ -7,7 +8,6 @@ locals {
   ubuntu_owner_id       = "099720109477"
   archi                 = "amd64" // amd64 or arm64
   amazonlinux_archi     = local.archi == "amd64" ? "x86_64" : "arm64"
-  ssh_port              = 22
   instance_type_bastion = local.archi == "arm64" ? "t4g.nano" : "t3.nano"
   bastion_price         = local.archi == "arm64" ? "0.0025" : "0.001"
   bastion_min           = 1
