@@ -1,0 +1,25 @@
+applications:
+  metrics-server:
+    namespace: argocd
+    finalizers:
+    - resources-finalizer.argocd.argoproj.io
+    project: default
+    source:
+      repoURL: https://kubernetes-sigs.github.io/metrics-server
+      chart: metrics-server
+      targetRevision: 3.13.0
+      helm:
+        values: |
+          args:
+            - '--kubelet-insecure-tls=true'
+          replicas: 2
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: metrics
+    syncPolicy:
+      automated:
+        prune: false
+        selfHeal: false
+      syncOptions:
+      - CreateNamespace=true
+    revisionHistoryLimit: null

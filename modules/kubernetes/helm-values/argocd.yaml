@@ -1,0 +1,29 @@
+configs:
+  params:
+    server.insecure: true
+
+repoServer:
+  name: repo-server
+  replicas: 2
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 50
+    targetMemoryUtilizationPercentage: 50
+
+server:
+  replicas: 2
+  ingress:
+    enabled: false
+  httproute:
+    enabled: true
+    parentRefs:
+      - name: tls-gateway
+        namespace: kube-system
+        sectionName: https
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /
