@@ -63,10 +63,10 @@ resource "aws_launch_template" "bastion" {
 }
 
 resource "aws_autoscaling_group" "bastion" {
-  name                 = "bastion"
-  vpc_zone_identifier  = data.terraform_remote_state.network.outputs.subnet_public[*]
-  min_size             = local.bastion_min
-  max_size             = local.bastion_max
+  name                = "bastion"
+  vpc_zone_identifier = data.terraform_remote_state.network.outputs.subnet_public[*]
+  min_size            = local.bastion_min
+  max_size            = local.bastion_max
 
   launch_template {
     id = aws_launch_template.bastion.id
@@ -208,11 +208,11 @@ resource "aws_launch_template" "kubernetes_worker" {
 }
 
 resource "aws_autoscaling_group" "kubernetes_worker" {
-  name                 = "kubernetes_worker"
-  vpc_zone_identifier  = data.terraform_remote_state.network.outputs.subnet_private[*]
-  target_group_arns    = [data.terraform_remote_state.network.outputs.aws_lb_target_group_external_https_arn]
-  min_size             = local.worker_min
-  max_size             = local.worker_max
+  name                = "kubernetes_worker"
+  vpc_zone_identifier = data.terraform_remote_state.network.outputs.subnet_private[*]
+  target_group_arns   = [data.terraform_remote_state.network.outputs.aws_lb_target_group_external_https_arn]
+  min_size            = local.worker_min
+  max_size            = local.worker_max
 
   launch_template {
     id = aws_launch_template.kubernetes_worker.id
