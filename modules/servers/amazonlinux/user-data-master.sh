@@ -13,7 +13,12 @@ hostnamectl set-hostname $NODENAME
 setenforce 0
 sed -i 's/^SELINUX=.*/SELINUX=disabled/' /etc/selinux/config
 
-dnf install -y nfsv4-client-utils
+dnf install -y \
+  nfsv4-client-utils \
+  rsyslog
+
+systemctl enable rsyslog
+systemctl start rsyslog
 
 cat <<EOF | tee /etc/modules-load.d/k8s.conf
 overlay
@@ -31,7 +36,7 @@ EOF
 
 sysctl --system
 
-CONTAINERD_VERS=$(curl -s https://github.com/containerd/containerd | grep '/releases/tag/v' | sed -e 's/.*\(.[0-9]*\.[0-9]*\.[0-9]\).*/\1/')
+CONTAINERD_VERS=$(curl -s https://api.github.com/repos/containerd/containerd/releases/latest | jq -r .tag_name | sed 's/^v//')
 curl -L -O https://github.com/containerd/containerd/releases/download/v$CONTAINERD_VERS/containerd-$CONTAINERD_VERS-linux-${archi}.tar.gz
 tar Cxzvf /usr/local containerd-$CONTAINERD_VERS-linux-${archi}.tar.gz
 rm containerd-$CONTAINERD_VERS-linux-${archi}.tar.gz
@@ -66,7 +71,7 @@ mkdir /etc/containerd
 containerd config default > /etc/containerd/config.toml
 sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
 
-RUNC_VERS=$(curl -s https://github.com/opencontainers/runc | grep '/releases/tag/v' | sed -e 's/.*\(.[0-9]*\.[0-9]*\.[0-9]\).*/\1/')
+RUNC_VERS=$(curl -s https://api.github.com/repos/opencontainers/runc/releases/latest | jq -r .tag_name | sed 's/^v//')
 curl -L -O https://github.com/opencontainers/runc/releases/download/v$RUNC_VERS/runc.${archi}
 install -m 755 runc.${archi} /usr/local/sbin/runc
 rm runc.${archi}
@@ -75,7 +80,7 @@ systemctl daemon-reload
 systemctl start containerd
 systemctl enable containerd
 
-KUBE_VERS=$(curl -s https://github.com/kubernetes/kubernetes | grep '/releases/tag/v' | sed -e 's/.*\(.[0-9]*\.[0-9]*\)\..*/\1/')
+KUBE_VERS=`curl -s https://api.github.com/repos/kubernetes/kubernetes/releases/latest | jq -r .tag_name | sed 's/^v\(.*\)\..*/\1/'`
 
 cat <<EOF | tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]

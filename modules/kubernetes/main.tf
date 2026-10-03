@@ -48,11 +48,7 @@ resource "kubernetes_secret_v1" "default_tls_cert" {
 resource "null_resource" "install-gateway-crds" {
   provisioner "local-exec" {
     command = <<EOF
-      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml
-      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_gateways.yaml
-      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml
-      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml
-      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml
+      KUBECONFIG=~/.kube/config-aws kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/${var.gateway_api_version}/standard-install.yaml
     EOF
   }
 
