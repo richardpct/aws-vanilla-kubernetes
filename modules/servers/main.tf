@@ -141,6 +141,7 @@ resource "null_resource" "get_kube_config" {
   provisioner "local-exec" {
     command = <<EOF
 while ! nc -w1 ${data.terraform_remote_state.network.outputs.aws_eip_bastion_ip} ${local.ssh_port}; do sleep 10; done
+ssh-keygen -R ${data.terraform_remote_state.network.outputs.aws_eip_bastion_ip}
 ssh -o StrictHostKeyChecking=accept-new ${local.linux_user}@${data.terraform_remote_state.network.outputs.aws_eip_bastion_ip} 'until [ -f /nfs/config ]; do sleep 10; done'
 [ -d ~/.kube ] || mkdir ~/.kube
 ssh ${local.linux_user}@${data.terraform_remote_state.network.outputs.aws_eip_bastion_ip} 'sed -e "s;https://.*:6443;https://${data.terraform_remote_state.network.outputs.aws_lb_external_dns_name}:6443;" /nfs/config' > ~/.kube/config-aws
@@ -149,15 +150,6 @@ chmod 600 ~/.kube/config-aws
     EOF
   }
 
-  depends_on = [aws_autoscaling_group.bastion]
-}
-
-resource "null_resource" "clean_ssh_know_hosts" {
-  provisioner "local-exec" {
-    command = <<EOF
-sed -i -e "/bastion.${var.my_domain}/d" ~/.ssh/known_hosts
-    EOF
-  }
   depends_on = [aws_autoscaling_group.bastion]
 }
 
