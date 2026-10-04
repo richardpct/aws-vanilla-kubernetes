@@ -429,11 +429,7 @@ modules/kubernetes/main.tf
 resource "null_resource" "install-gateway-crds" {
   provisioner "local-exec" {
     command = <<EOF
-      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml
-      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_gateways.yaml
-      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml
-      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml
-      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml
+      KUBECONFIG=${data.terraform_remote_state.servers.outputs.kube_config} kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/${var.gateway_api_version}/standard-install.yaml
     EOF
   }
 
