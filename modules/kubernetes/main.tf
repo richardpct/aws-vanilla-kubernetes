@@ -48,7 +48,7 @@ resource "kubernetes_secret_v1" "default_tls_cert" {
 resource "null_resource" "install-gateway-crds" {
   provisioner "local-exec" {
     command = <<EOF
-      KUBECONFIG=~/.kube/config-aws kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/${var.gateway_api_version}/standard-install.yaml
+      KUBECONFIG=${data.terraform_remote_state.servers.outputs.kube_config} kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/${var.gateway_api_version}/standard-install.yaml
     EOF
   }
 

@@ -144,9 +144,9 @@ while ! nc -w1 ${data.terraform_remote_state.network.outputs.aws_eip_bastion_ip}
 ssh-keygen -R ${data.terraform_remote_state.network.outputs.aws_eip_bastion_ip}
 ssh -o StrictHostKeyChecking=accept-new ${local.linux_user}@${data.terraform_remote_state.network.outputs.aws_eip_bastion_ip} 'until [ -f /nfs/config ]; do sleep 10; done'
 [ -d ~/.kube ] || mkdir ~/.kube
-ssh ${local.linux_user}@${data.terraform_remote_state.network.outputs.aws_eip_bastion_ip} 'sed -e "s;https://.*:6443;https://${data.terraform_remote_state.network.outputs.aws_lb_external_dns_name}:6443;" /nfs/config' > ~/.kube/config-aws
+ssh ${local.linux_user}@${data.terraform_remote_state.network.outputs.aws_eip_bastion_ip} 'sed -e "s;https://.*:6443;https://${data.terraform_remote_state.network.outputs.aws_lb_external_dns_name}:6443;" /nfs/config' > ${var.kube_config}
 ssh ${local.linux_user}@${data.terraform_remote_state.network.outputs.aws_eip_bastion_ip} 'sudo umount /nfs'
-chmod 600 ~/.kube/config-aws
+chmod 600 ${var.kube_config}
     EOF
   }
 

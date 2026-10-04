@@ -51,9 +51,9 @@ resource "aws_lb" "internal" {
 }
 
 resource "aws_lb_target_group" "internal_api" {
-  name     = "lb-target-group-internal-api"
-  port     = local.kube_api_port
-  protocol = "TCP"
+  name               = "lb-target-group-internal-api"
+  port               = local.kube_api_port
+  protocol           = "TCP"
   # ec2 can reach out to itself through the NLB
   # see https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-troubleshooting.html
   preserve_client_ip = false

@@ -13,6 +13,7 @@ resource "aws_s3_bucket_ownership_controls" "kubernetes" {
 
 resource "aws_s3_bucket_versioning" "kubernetes" {
   bucket = aws_s3_bucket.kubernetes.id
+
   versioning_configuration {
     status = "Enabled"
   }
