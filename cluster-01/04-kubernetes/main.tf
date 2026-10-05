@@ -10,5 +10,6 @@ module "kubernetes" {
   network_remote_state_key        = var.key_network
   servers_remote_state_bucket     = var.bucket
   servers_remote_state_key        = var.key_servers
+  rook_version                    = "1.20.8"
   gateway_api_version             = "v1.6.1"
 }

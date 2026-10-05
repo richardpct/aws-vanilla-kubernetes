@@ -23,11 +23,6 @@ variable "key_servers" {
   description = "bucket key servers"
 }
 
-variable "my_domain" {
-  type        = string
-  description = "my domain name"
-}
-
 variable "ssh_public_key" {
   type        = string
   description = "ssh public key"

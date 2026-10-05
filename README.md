@@ -65,11 +65,18 @@ resource "acme_certificate" "wildcard" {
   account_key_pem = acme_registration.reg.account_key_pem
   common_name     = "*.${var.my_domain}"
 
-  recursive_nameservers        = ["8.8.8.8:53"]
-  disable_complete_propagation = true
+  recursive_nameservers             = ["8.8.8.8:53"]
+  disable_authoritative_propagation = true
 
   dns_challenge {
     provider = "route53"
+
+    # The challenge is not performed by the aws provider, so without this it
+    # would silently use your default AWS credentials instead of var.aws_profile
+    config = {
+      AWS_PROFILE = var.aws_profile
+      AWS_REGION  = var.region
+    }
   }
 }
 ```
@@ -164,8 +171,8 @@ modules/servers/variables.tf
 ```
 locals {
   ...
-  instance_type_bastion = local.archi == "arm64" ? "t4g.nano" : "t3.nano"
-  bastion_price         = local.archi == "arm64" ? "0.0025" : "0.001"
+  instance_type_bastion = local.archi == "arm64" ? "t4g.nano" : "t3.micro"
+  bastion_price         = local.archi == "arm64" ? "0.0025" : "0.0015"
   instance_type_master  = local.archi == "arm64" ? "t4g.small" : "t3.small"
   master_price          = local.archi == "arm64" ? "0.010" : "0.010"
   instance_type_worker  = local.archi == "arm64" ? "t4g.medium" : "t3.medium"
@@ -181,12 +188,13 @@ modules/servers/main.tf
 resource "aws_launch_template" "kubernetes_master" {
   name      = "kubernetes_master"
   image_id  = data.aws_ami.linux.id
-  user_data = base64encode(templatefile("${path.module}/${local.distribution}/user-data-master.sh",
-                                        { linux_user        = local.linux_user,
-                                          archi             = local.archi,
-                                          efs_dns_name      = aws_efs_file_system.efs.dns_name,
-                                          kube_api_external = data.terraform_remote_state.network.outputs.aws_lb_external_dns_name,
-                                          kube_api_internal = data.terraform_remote_state.network.outputs.aws_lb_internal_dns_name }))
+  user_data = base64encode(templatefile("${path.module}/${local.distribution}/user-data-master.sh", {
+    linux_user        = local.linux_user
+    archi             = local.archi
+    efs_dns_name      = aws_efs_file_system.efs.dns_name
+    kube_api_external = data.terraform_remote_state.network.outputs.aws_lb_external_dns_name
+    kube_api_internal = data.terraform_remote_state.network.outputs.aws_lb_internal_dns_name
+  }))
   instance_type = local.instance_type_master
   key_name      = aws_key_pair.my_key.key_name
 
@@ -195,7 +203,7 @@ resource "aws_launch_template" "kubernetes_master" {
 
     ebs {
       volume_size           = var.root_size_master
-      volume_type           = "gp2"
+      volume_type           = "gp3"
       delete_on_termination = true
     }
   }
@@ -289,7 +297,7 @@ resource "helm_release" "cilium" {
   force_update = true
 
   values = [
-    "${file("${path.module}/helm-values/cilium.yaml")}"
+    file("${path.module}/helm-values/cilium.yaml")
   ]
 
   set = [
@@ -346,29 +354,31 @@ You can notice we setup the gateway API in hostnetwork mode
 We install Rook Ceph by using the helm chart, there are 2 components to install:
 the operator and the rook-ceph-cluster.
 
-We firstly download the default values from the github repository, then we
-remove all request resources cpu and memory, because by default they are to high
-for our small cluster:
+We firstly download the default values of both charts from the github
+repository, then we remove all request resources cpu and memory, because by
+default they are too high for our small cluster:
 
-modules/servers/main.tf
+modules/kubernetes/main.tf
 ```
-resource "null_resource" "get_rook_ceph_operator_values" {
-  provisioner "local-exec" {
-    command = <<EOF
-curl -s -o /tmp/rook-ceph-operator-values.yaml https://raw.githubusercontent.com/rook/rook/refs/tags/v${var.rook_version}/deploy/charts/rook-ceph/values.yaml
-sed -i -e 's/cpu:.*/cpu:/' /tmp/rook-ceph-operator-values.yaml
-sed -i -e 's/memory:.*/memory:/' /tmp/rook-ceph-operator-values.yaml
-    EOF
+# The default values of both rook charts, taken from the same tag as the charts
+data "http" "rook_ceph_values" {
+  for_each = toset(["rook-ceph", "rook-ceph-cluster"])
+  url      = "https://raw.githubusercontent.com/rook/rook/refs/tags/v${var.rook_version}/deploy/charts/${each.key}/values.yaml"
+
+  lifecycle {
+    postcondition {
+      condition     = self.status_code == 200
+      error_message = "Cannot download ${self.url} (HTTP ${self.status_code}), check rook_version."
+    }
   }
 }
 
-resource "null_resource" "get_rook_ceph_cluster_values" {
-  provisioner "local-exec" {
-    command = <<EOF
-curl -s -o /tmp/rook-ceph-cluster-values.yaml https://raw.githubusercontent.com/rook/rook/refs/tags/v${var.rook_version}/deploy/charts/rook-ceph-cluster/values.yaml
-sed -i -e 's/cpu:.*/cpu:/' /tmp/rook-ceph-cluster-values.yaml
-sed -i -e 's/memory:.*/memory:/' /tmp/rook-ceph-cluster-values.yaml
-    EOF
+locals {
+  # The default cpu and memory requests are too high for our small cluster, so
+  # we blank all of them
+  rook_ceph_values = {
+    for chart, response in data.http.rook_ceph_values :
+    chart => replace(replace(response.response_body, "/cpu:.*/", "cpu:"), "/memory:.*/", "memory:")
   }
 }
 ```
@@ -381,13 +391,13 @@ resource "helm_release" "rook-ceph-operator" {
   name             = "rook-ceph"
   repository       = "https://charts.rook.io/release"
   chart            = "rook-ceph"
-  version          = data.terraform_remote_state.servers.outputs.rook_version
+  version          = var.rook_version
   namespace        = "rook-ceph"
   create_namespace = true
   force_update     = true
 
   values = [
-    "${file("/tmp/rook-ceph-operator-values.yaml")}"
+    local.rook_ceph_values["rook-ceph"]
   ]
 
   depends_on = [helm_release.cilium]
@@ -397,13 +407,13 @@ resource "helm_release" "rook-ceph-cluster" {
   name             = "rook-ceph-cluster"
   repository       = "https://charts.rook.io/release"
   chart            = "rook-ceph-cluster"
-  version          = data.terraform_remote_state.servers.outputs.rook_version
+  version          = var.rook_version
   namespace        = "rook-ceph"
   create_namespace = true
   force_update     = true
 
   values = [
-    "${file("/tmp/rook-ceph-cluster-values.yaml")}"
+    local.rook_ceph_values["rook-ceph-cluster"]
   ]
 
   set = [
@@ -427,6 +437,11 @@ manifest.
 modules/kubernetes/main.tf
 ```
 resource "null_resource" "install-gateway-crds" {
+  # Without a trigger the CRDs would never be applied again after a version bump
+  triggers = {
+    gateway_api_version = var.gateway_api_version
+  }
+
   provisioner "local-exec" {
     command = <<EOF
       KUBECONFIG=${data.terraform_remote_state.servers.outputs.kube_config} kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/${var.gateway_api_version}/standard-install.yaml
@@ -488,7 +503,7 @@ resource "helm_release" "argo_cd" {
   force_update     = true
 
   values = [
-    "${file("${path.module}/helm-values/argocd.yaml")}"
+    file("${path.module}/helm-values/argocd.yaml")
   ]
 
   set = [
@@ -514,7 +529,7 @@ resource "helm_release" "argocd_apps" {
   force_update     = true
 
   values = [
-    "${file("${path.module}/helm-values/argocd-apps.yaml")}"
+    file("${path.module}/helm-values/argocd-apps.yaml")
   ]
 
   depends_on = [helm_release.argo_cd]
@@ -567,7 +582,7 @@ applications:
     source:
       repoURL: https://kubernetes-sigs.github.io/metrics-server
       chart: metrics-server
-      targetRevision: 3.13.0
+      targetRevision: 3.14.0
       helm:
         values: |
           args:

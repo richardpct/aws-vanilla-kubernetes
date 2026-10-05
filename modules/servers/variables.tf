@@ -47,11 +47,6 @@ variable "network_remote_state_key" {
   description = "bucket network key"
 }
 
-variable "my_domain" {
-  type        = string
-  description = "my domain name"
-}
-
 variable "ssh_public_key" {
   type        = string
   description = "ssh public key"
@@ -73,11 +68,6 @@ variable "add_disk_size_worker" {
   type        = number
   description = "worker instance additional disk size for rook ceph"
   default     = 15
-}
-
-variable "rook_version" {
-  type        = string
-  description = "rook version"
 }
 
 variable "kube_config" {

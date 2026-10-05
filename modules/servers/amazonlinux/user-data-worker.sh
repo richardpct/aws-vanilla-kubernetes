@@ -92,7 +92,7 @@ gpgkey=https://pkgs.k8s.io/core:/stable:/v$KUBE_VERS/rpm/repodata/repomd.xml.key
 exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
 EOF
 
-dnf update
+dnf makecache
 dnf install -y \
   --disableexcludes=kubernetes \
   kubelet \

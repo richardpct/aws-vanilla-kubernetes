@@ -19,7 +19,7 @@ data "aws_ami" "linux" {
 
   filter {
     name   = "name"
-    values = [local.distribution == "ubuntu" ? "ubuntu-minimal/images/hvm-ssd-gp3/ubuntu-${local.ubuntu_version}-${local.archi}-minimal-*" : "${local.amazonlinux_version}-ami-*-kernel-*-${local.amazonlinux_archi}"]
+    values = [local.distribution == "ubuntu" ? "ubuntu-minimal/images/hvm-ssd-gp3/ubuntu-${local.ubuntu_version}-${local.archi}-minimal-*" : "${local.amazonlinux_version}-ami-2*-kernel-*-${local.amazonlinux_archi}"]
   }
 
   filter {
@@ -33,10 +33,11 @@ data "aws_ami" "linux" {
 resource "aws_launch_template" "bastion" {
   name      = "bastion"
   image_id  = data.aws_ami.linux.id
-  user_data = base64encode(templatefile("${path.module}/${local.distribution}/user-data-bastion.sh",
-                                        { eip_bastion_id = data.terraform_remote_state.network.outputs.aws_eip_bastion_id,
-                                          efs_dns_name   = aws_efs_file_system.efs.dns_name,
-                                          region         = var.region }))
+  user_data = base64encode(templatefile("${path.module}/${local.distribution}/user-data-bastion.sh", {
+    eip_bastion_id = data.terraform_remote_state.network.outputs.aws_eip_bastion_id
+    efs_dns_name   = aws_efs_file_system.efs.dns_name
+    region         = var.region
+  }))
   instance_type = local.instance_type_bastion
   key_name      = aws_key_pair.my_key.key_name
 
@@ -64,12 +65,13 @@ resource "aws_launch_template" "bastion" {
 
 resource "aws_autoscaling_group" "bastion" {
   name                = "bastion"
-  vpc_zone_identifier = data.terraform_remote_state.network.outputs.subnet_public[*]
+  vpc_zone_identifier = data.terraform_remote_state.network.outputs.subnet_public
   min_size            = local.bastion_min
   max_size            = local.bastion_max
 
   launch_template {
-    id = aws_launch_template.bastion.id
+    id      = aws_launch_template.bastion.id
+    version = aws_launch_template.bastion.latest_version
   }
 
   tag {
@@ -82,12 +84,13 @@ resource "aws_autoscaling_group" "bastion" {
 resource "aws_launch_template" "kubernetes_master" {
   name      = "kubernetes_master"
   image_id  = data.aws_ami.linux.id
-  user_data = base64encode(templatefile("${path.module}/${local.distribution}/user-data-master.sh",
-                                        { linux_user        = local.linux_user,
-                                          archi             = local.archi,
-                                          efs_dns_name      = aws_efs_file_system.efs.dns_name,
-                                          kube_api_external = data.terraform_remote_state.network.outputs.aws_lb_external_dns_name,
-                                          kube_api_internal = data.terraform_remote_state.network.outputs.aws_lb_internal_dns_name }))
+  user_data = base64encode(templatefile("${path.module}/${local.distribution}/user-data-master.sh", {
+    linux_user        = local.linux_user
+    archi             = local.archi
+    efs_dns_name      = aws_efs_file_system.efs.dns_name
+    kube_api_external = data.terraform_remote_state.network.outputs.aws_lb_external_dns_name
+    kube_api_internal = data.terraform_remote_state.network.outputs.aws_lb_internal_dns_name
+  }))
   instance_type = local.instance_type_master
   key_name      = aws_key_pair.my_key.key_name
 
@@ -96,7 +99,7 @@ resource "aws_launch_template" "kubernetes_master" {
 
     ebs {
       volume_size           = var.root_size_master
-      volume_type           = "gp2"
+      volume_type           = "gp3"
       delete_on_termination = true
     }
   }
@@ -120,14 +123,18 @@ resource "aws_launch_template" "kubernetes_master" {
 
 resource "aws_autoscaling_group" "kubernetes_master" {
   name                = "kubernetes_master"
-  vpc_zone_identifier = data.terraform_remote_state.network.outputs.subnet_private[*]
-  target_group_arns   = [data.terraform_remote_state.network.outputs.aws_lb_target_group_external_api_arn,
-                         data.terraform_remote_state.network.outputs.aws_lb_target_group_internal_api_arn]
+  vpc_zone_identifier = data.terraform_remote_state.network.outputs.subnet_private
   min_size            = local.master_min
   max_size            = local.master_max
 
+  target_group_arns = [
+    data.terraform_remote_state.network.outputs.aws_lb_target_group_external_api_arn,
+    data.terraform_remote_state.network.outputs.aws_lb_target_group_internal_api_arn,
+  ]
+
   launch_template {
-    id = aws_launch_template.kubernetes_master.id
+    id      = aws_launch_template.kubernetes_master.id
+    version = aws_launch_template.kubernetes_master.latest_version
   }
 
   tag {
@@ -156,9 +163,10 @@ chmod 600 ${var.kube_config}
 resource "aws_launch_template" "kubernetes_worker" {
   name      = "Kubernetes_worker"
   image_id  = data.aws_ami.linux.id
-  user_data = base64encode(templatefile("${path.module}/${local.distribution}/user-data-worker.sh",
-                                        { archi             = local.archi,
-                                          efs_dns_name      = aws_efs_file_system.efs.dns_name }))
+  user_data = base64encode(templatefile("${path.module}/${local.distribution}/user-data-worker.sh", {
+    archi        = local.archi
+    efs_dns_name = aws_efs_file_system.efs.dns_name
+  }))
   instance_type = local.instance_type_worker
   key_name      = aws_key_pair.my_key.key_name
 
@@ -167,7 +175,7 @@ resource "aws_launch_template" "kubernetes_worker" {
 
     ebs {
       volume_size           = var.root_size_worker
-      volume_type           = "gp2"
+      volume_type           = "gp3"
       delete_on_termination = true
     }
   }
@@ -177,7 +185,7 @@ resource "aws_launch_template" "kubernetes_worker" {
 
     ebs {
       volume_size           = var.add_disk_size_worker
-      volume_type           = "gp2"
+      volume_type           = "gp3"
       delete_on_termination = true
     }
   }
@@ -201,38 +209,19 @@ resource "aws_launch_template" "kubernetes_worker" {
 
 resource "aws_autoscaling_group" "kubernetes_worker" {
   name                = "kubernetes_worker"
-  vpc_zone_identifier = data.terraform_remote_state.network.outputs.subnet_private[*]
+  vpc_zone_identifier = data.terraform_remote_state.network.outputs.subnet_private
   target_group_arns   = [data.terraform_remote_state.network.outputs.aws_lb_target_group_external_https_arn]
   min_size            = local.worker_min
   max_size            = local.worker_max
 
   launch_template {
-    id = aws_launch_template.kubernetes_worker.id
+    id      = aws_launch_template.kubernetes_worker.id
+    version = aws_launch_template.kubernetes_worker.latest_version
   }
 
   tag {
     key                 = "Name"
     value               = "kubernetes worker"
     propagate_at_launch = true
-  }
-}
-
-resource "null_resource" "get_rook_ceph_operator_values" {
-  provisioner "local-exec" {
-    command = <<EOF
-curl -s -o /tmp/rook-ceph-operator-values.yaml https://raw.githubusercontent.com/rook/rook/refs/tags/v${var.rook_version}/deploy/charts/rook-ceph/values.yaml
-sed -i -e 's/cpu:.*/cpu:/' /tmp/rook-ceph-operator-values.yaml
-sed -i -e 's/memory:.*/memory:/' /tmp/rook-ceph-operator-values.yaml
-    EOF
-  }
-}
-
-resource "null_resource" "get_rook_ceph_cluster_values" {
-  provisioner "local-exec" {
-    command = <<EOF
-curl -s -o /tmp/rook-ceph-cluster-values.yaml https://raw.githubusercontent.com/rook/rook/refs/tags/v${var.rook_version}/deploy/charts/rook-ceph-cluster/values.yaml
-sed -i -e 's/cpu:.*/cpu:/' /tmp/rook-ceph-cluster-values.yaml
-sed -i -e 's/memory:.*/memory:/' /tmp/rook-ceph-cluster-values.yaml
-    EOF
   }
 }

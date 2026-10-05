@@ -5,8 +5,6 @@ module "servers" {
   env                         = "cluster-01"
   network_remote_state_bucket = var.bucket
   network_remote_state_key    = var.key_network
-  my_domain                   = var.my_domain
   ssh_public_key              = var.ssh_public_key
-  rook_version                = "1.20.8"
   kube_config                 = "~/.kube/config-aws"
 }
