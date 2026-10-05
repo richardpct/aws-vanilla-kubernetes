@@ -54,10 +54,11 @@ resource "aws_lb_target_group" "internal_api" {
   name     = "lb-target-group-internal-api"
   port     = local.kube_api_port
   protocol = "TCP"
+  vpc_id   = aws_vpc.my_vpc.id
+
   # ec2 can reach out to itself through the NLB
   # see https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-troubleshooting.html
   preserve_client_ip = false
-  vpc_id             = aws_vpc.my_vpc.id
 }
 
 resource "aws_lb_listener" "internal_api" {

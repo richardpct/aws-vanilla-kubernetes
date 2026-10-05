@@ -46,13 +46,13 @@ resource "kubernetes_secret_v1" "default_tls_cert" {
 }
 
 resource "null_resource" "install-gateway-crds" {
+  triggers = {
+    gateway_api_version = var.gateway_api_version
+  }
+
   provisioner "local-exec" {
     command = <<EOF
-      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml
-      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_gateways.yaml
-      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml
-      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml
-      kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${var.gateway_api_version}/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml
+      KUBECONFIG=${data.terraform_remote_state.servers.outputs.kube_config} kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/${var.gateway_api_version}/standard-install.yaml
     EOF
   }
 
@@ -77,7 +77,7 @@ resource "helm_release" "cilium" {
   force_update = true
 
   values = [
-    "${file("${path.module}/helm-values/cilium.yaml")}"
+    file("${path.module}/helm-values/cilium.yaml")
   ]
 
   set = [
@@ -90,17 +90,39 @@ resource "helm_release" "cilium" {
   depends_on = [kubectl_manifest.gateway]
 }
 
+# the default values of both rook charts, taken from the same tag as the charts
+data "http" "rook_ceph_values" {
+  for_each = toset(["rook-ceph", "rook-ceph-cluster"])
+  url      = "https://raw.githubusercontent.com/rook/rook/refs/tags/v${var.rook_version}/deploy/charts/${each.key}/values.yaml"
+
+  lifecycle {
+    postcondition {
+      condition     = self.status_code == 200
+      error_message = "cannot download ${self.url} (HTTP ${self.status_code}), check rook_version."
+    }
+  }
+}
+
+locals {
+  # the default cpu and memory requests are too high for our small cluster, so
+  # we blank all of them
+  rook_ceph_values = {
+    for chart, response in data.http.rook_ceph_values :
+    chart => replace(replace(response.response_body, "/cpu:.*/", "cpu:"), "/memory:.*/", "memory:")
+  }
+}
+
 resource "helm_release" "rook-ceph-operator" {
   name             = "rook-ceph"
   repository       = "https://charts.rook.io/release"
   chart            = "rook-ceph"
-  version          = data.terraform_remote_state.servers.outputs.rook_version
+  version          = var.rook_version
   namespace        = "rook-ceph"
   create_namespace = true
   force_update     = true
 
   values = [
-    "${file("/tmp/rook-ceph-operator-values.yaml")}"
+    local.rook_ceph_values["rook-ceph"]
   ]
 
   depends_on = [helm_release.cilium]
@@ -110,13 +132,13 @@ resource "helm_release" "rook-ceph-cluster" {
   name             = "rook-ceph-cluster"
   repository       = "https://charts.rook.io/release"
   chart            = "rook-ceph-cluster"
-  version          = data.terraform_remote_state.servers.outputs.rook_version
+  version          = var.rook_version
   namespace        = "rook-ceph"
   create_namespace = true
   force_update     = true
 
   values = [
-    "${file("/tmp/rook-ceph-cluster-values.yaml")}"
+    local.rook_ceph_values["rook-ceph-cluster"]
   ]
 
   set = [
@@ -138,7 +160,7 @@ resource "helm_release" "argo_cd" {
   force_update     = true
 
   values = [
-    "${file("${path.module}/helm-values/argocd.yaml")}"
+    file("${path.module}/helm-values/argocd.yaml")
   ]
 
   set = [
@@ -164,7 +186,7 @@ resource "helm_release" "argocd_apps" {
   force_update     = true
 
   values = [
-    "${file("${path.module}/helm-values/argocd-apps.yaml")}"
+    file("${path.module}/helm-values/argocd-apps.yaml")
   ]
 
   depends_on = [helm_release.argo_cd]
